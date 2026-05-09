@@ -63,7 +63,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeModule = 'Contacts', onModuleCh
         { icon: Image, label: 'Media Library', id: 'Media Library', tKey: 'sidebar.media_library' },
         { icon: Facebook, label: 'Facebook Group', id: 'Facebook Group', tKey: 'sidebar.facebook_group' },
         { icon: Brain, label: 'AI Solutions', id: 'AI Solutions', tKey: 'sidebar.ai_solutions' },
-        { icon: Truck, label: 'Modern Carriers', id: 'Modern Carriers', tKey: 'Modern Carriers', url: 'https://modern-carriers.lovable.app/' }
+        { icon: Truck, label: 'Modern Carriers', id: 'Modern Carriers', tKey: 'Modern Carriers' }
     ];
 
     const toggleLanguage = () => {
@@ -106,8 +106,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeModule = 'Contacts', onModuleCh
                         <button
                             key={item.id}
                             onClick={() => {
-                                if ('url' in item && item.url) {
-                                    window.open(item.url, '_blank');
+                                if ('url' in item && (item as any).url) {
+                                    window.open((item as any).url as string, '_blank');
                                     return;
                                 }
                                 console.log('Sidebar: clicking module', item.id);

@@ -35,6 +35,7 @@ import FacebookGroupPage from './pages/FacebookGroupPage';
 import { PropertyTourPage } from './pages/Property/PropertyTourPage';
 import { Loader2 } from 'lucide-react';
 import WorkflowBuilder from './pages/WorkflowBuilder';
+import ModernCarriersPage from './pages/ModernCarriersPage';
 
 function App() {
   const [activeModule, setActiveModule] = useState(window.location.search.includes('tour') ? 'Property Tour' : 'Contacts');
@@ -97,6 +98,8 @@ function App() {
         return <WebinarPage />;
       case 'Property Tour':
         return <PropertyTourPage />;
+      case 'Modern Carriers':
+        return <ModernCarriersPage />;
       default:
         return <ContactsPage />;
     }
