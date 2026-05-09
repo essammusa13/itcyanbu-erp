@@ -597,6 +597,74 @@ export default function ModernCarriersPage() {
                 يوجد حالياً {data.trips?.filter(t => t.status === 'travelling').length} شاحنة في الطريق. جميع الرحلات تسير وفق الجدول الزمني المحدد. ننصح بمتابعة الشاحنة المتوجهة للرياض نظراً لظروف الطريق.
               </p>
             </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+               <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                  <div className="flex justify-between items-center mb-4">
+                    <h4 className="font-bold flex items-center gap-2">
+                      <ArrowRightLeft size={18} className="text-purple-600" />
+                      أحدث الرحلات (Trip History)
+                    </h4>
+                    <button 
+                      onClick={() => {
+                        const tableData = data?.trips || [];
+                        const headers = ["ID", "Truck", "Driver", "Destination", "Departure", "Return", "Status"];
+                        const csvRows = [
+                          headers.join(','),
+                          ...tableData.map(t => [t.id, t.truck, `"${t.driver}"`, `"${t.destination}"`, t.departureDate, t.returnDate || '', t.status].join(','))
+                        ].join('\n');
+                        const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + csvRows;
+                        const link = document.createElement("a");
+                        link.setAttribute("href", encodeURI(csvContent));
+                        link.setAttribute("download", "fleet_movement_report.csv");
+                        link.click();
+                      }}
+                      className="text-[10px] bg-purple-50 text-purple-700 px-2 py-1 rounded hover:bg-purple-100 transition"
+                    >
+                      تصدير تقرير الحركة
+                    </button>
+                  </div>
+                  <div className="text-[11px] space-y-2">
+                    {data.trips?.slice(-5).reverse().map((t, i) => (
+                      <div key={i} className="flex justify-between items-center p-2 border-b last:border-0 hover:bg-gray-50 rounded transition">
+                        <div className="flex gap-3 items-center">
+                          <span className="font-bold text-gray-800">{t.truck}</span>
+                          <span className="text-gray-500">{t.destination}</span>
+                        </div>
+                        <div className="flex gap-3 items-center">
+                           <span className={`px-1.5 py-0.5 rounded text-[9px] ${t.status === 'returned' ? 'bg-green-50 text-green-600' : 'bg-purple-50 text-purple-600'}`}>
+                             {t.status === 'returned' ? 'عادت' : 'في الطريق'}
+                           </span>
+                           <span className="text-gray-400">{t.departureDate.split(' ')[0]}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+               </div>
+
+               <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                  <h4 className="font-bold mb-4 flex items-center gap-2">
+                    <Users size={18} className="text-blue-600" />
+                    تحليل أداء السائقين (Driver Trips)
+                  </h4>
+                  <div className="space-y-4">
+                    {Array.from(new Set(data.trips?.map(t => t.driver))).slice(0, 3).map((driver, i) => {
+                      const count = data.trips?.filter(t => t.driver === driver).length || 0;
+                      return (
+                        <div key={i}>
+                          <div className="flex justify-between text-[11px] mb-1">
+                            <span>{driver}</span>
+                            <span>{count} رحلات</span>
+                          </div>
+                          <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
+                            <div className="bg-blue-600 h-full transition-all duration-1000" style={{ width: `${(count / (data.trips?.length || 1)) * 100}%` }}></div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+               </div>
+            </div>
           </div>
         )}
       </div>
