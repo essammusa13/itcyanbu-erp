@@ -352,7 +352,7 @@ export default function ModernCarriersPage() {
                     <td className="p-3" dir="ltr">{item.phone}</td>
                     <td className="p-3">{item.licenseExpiry}</td>
                     <td className="p-3">
-                      {isAdminMode && (
+                      {isAdminMode ? (
                         <div className="flex gap-1">
                           <button 
                             onClick={() => {
@@ -370,7 +370,6 @@ export default function ModernCarriersPage() {
                             onClick={() => {
                               const now = new Date().toLocaleTimeString('sv-SE').slice(0, 5);
                               const today = new Date().toLocaleDateString('sv-SE');
-                              // Find the last check-in for this employee today
                               const lastIdx = (data?.attendance || []).reduce((acc: number, curr: AttendanceLog, idx: number) => 
                                 (curr.employeeId === item.id && curr.date === today) ? idx : acc, -1);
                               
@@ -387,11 +386,13 @@ export default function ModernCarriersPage() {
                             className="px-2 py-1 bg-red-50 text-red-700 rounded text-[10px] font-bold hover:bg-red-100"
                           >انصراف</button>
                         </div>
+                      ) : (
+                        <span className="text-gray-300 flex items-center gap-1 text-[10px]"><Lock size={12} /> وضع العرض</span>
                       )}
                     </td>
-                    <td className="p-3 flex gap-2">
-                      {isAdminMode && (
-                        <>
+                    <td className="p-3">
+                      {isAdminMode ? (
+                        <div className="flex gap-2">
                           <button onClick={() => { setEditingItem(item); setIsEditing(true); }} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded"><Pencil size={16} /></button>
                           <button onClick={() => {
                             if (confirm('حذف الموظف؟')) {
@@ -400,7 +401,9 @@ export default function ModernCarriersPage() {
                               localStorage.setItem('modern_carriers_employees', JSON.stringify(updated));
                             }
                           }} className="p-1.5 text-red-600 hover:bg-red-50 rounded"><Trash2 size={16} /></button>
-                        </>
+                        </div>
+                      ) : (
+                        <Lock size={14} className="text-gray-200" />
                       )}
                     </td>
                   </tr>
@@ -667,7 +670,7 @@ export default function ModernCarriersPage() {
       )}
 
       <div className="mt-8 text-center text-[10px] text-gray-400">
-        نسخة v1.3.2 - استعادة كافة الجداول المفقودة (السائقين، العهد، الأجهزة)
+        نسخة v1.3.3 - تحسين تنبيهات وضع المسؤول
       </div>
     </div>
   );
