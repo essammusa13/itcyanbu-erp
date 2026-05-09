@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Truck, Navigation, FileText, Users, ExternalLink, Loader2, Lock, ClipboardList, Plus, Pencil, Trash2, Save, X, Download, BarChart2, Clock, CheckCircle2, Circle, ListTodo, Map, ArrowRightLeft } from 'lucide-react';
+import { Truck, Navigation, FileText, Users, ExternalLink, Loader2, Lock, ClipboardList, Plus, Pencil, Trash2, X, Download, BarChart2, CheckCircle2, Circle, ListTodo, Map, ArrowRightLeft } from 'lucide-react';
 
 interface FleetItem { id: number; type: string; plate: string; model: number; expiry: string; }
 interface CustodyItem { id: number; driverName: string; idNumber: number; type: string; status: string; }
-interface DeviceItem { id: number; type: string; truck: string; serial?: string; status: string; }
+interface DeviceItem { id: number; plate: string; sn: string; type: string; status: string; }
 interface DriverItem { id: number; name: string; plate: string; licenseExpiry: string; phone: number; }
 interface EmployeeItem { id: number; name: string; idNumber: number; license: string; phone: string; idExpiry: string; licenseExpiry: string; }
 interface TaskItem { id: number; title: string; assignedTo: string; status: 'completed' | 'pending' | 'in-progress'; date: string; }
@@ -12,8 +12,7 @@ interface TripItem { id: number; truck: string; driver: string; destination: str
 export default function ModernCarriersPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => sessionStorage.getItem('modern_carriers_auth') === 'true');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  
+  const [activeTab, setActiveTab] = useState('fleet');
   const [data, setData] = useState<{
     fleet: FleetItem[];
     custody: CustodyItem[];
@@ -25,10 +24,9 @@ export default function ModernCarriersPage() {
   } | null>(null);
   
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('fleet');
+  const [showAddForm, setShowAddForm] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingItem, setEditingItem] = useState<EmployeeItem | null>(null);
-  const [showAddForm, setShowAddForm] = useState(false);
   const [newEmployee, setNewEmployee] = useState<Partial<EmployeeItem>>({});
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [newTask, setNewTask] = useState<Partial<TaskItem>>({ status: 'pending' });
@@ -39,11 +37,10 @@ export default function ModernCarriersPage() {
     fetch('/data/nwagl.json')
       .then(res => res.json())
       .then(json => {
-        // Load from localStorage if available, otherwise use json
+        // Load persistent data from localStorage
         const savedEmployees = localStorage.getItem('modern_carriers_employees');
-        if (savedEmployees) {
-          json.employees = JSON.parse(savedEmployees);
-        }
+        if (savedEmployees) json.employees = JSON.parse(savedEmployees);
+        
         const savedTasks = localStorage.getItem('modern_carriers_tasks');
         if (savedTasks) {
           json.tasks = JSON.parse(savedTasks);
@@ -51,9 +48,10 @@ export default function ModernCarriersPage() {
           json.tasks = [
             { id: 1, title: 'فحص زيت الشاحنات الأسبوعي', assignedTo: 'أحمد الفكي', status: 'completed', date: '2026-05-01' },
             { id: 2, title: 'تجديد استمارة شاحنة 9849', assignedTo: 'إدارة', status: 'pending', date: '2026-05-10' },
-            { id: 3, title: 'تركيب أجهزة تتبع جديدة', assignedTo: 'فني التقنية', status: 'in-progress', date: '2026-05-08' }
+            { id: 3, title: 'تركيب أجهزة تتبع جديدة', assignedTo: 'فني التقنية', status: 'pending', date: '2026-05-08' }
           ];
         }
+
         const savedTrips = localStorage.getItem('modern_carriers_trips');
         if (savedTrips) {
           json.trips = JSON.parse(savedTrips);
@@ -63,6 +61,7 @@ export default function ModernCarriersPage() {
             { id: 2, truck: '9095 أ أ ر', driver: 'أحمد الفكي', destination: 'جدة', departureDate: '2026-05-08 10:00', returnDate: '2026-05-09 14:00', status: 'returned' }
           ];
         }
+        
         setData(json);
         setLoading(false);
       })
@@ -72,345 +71,185 @@ export default function ModernCarriersPage() {
       });
   }, []);
 
-  if (loading) {
-    return (
-      <div className="h-full w-full flex items-center justify-center">
-        <Loader2 className="animate-spin text-ghl-blue" size={40} />
-      </div>
-    );
-  }
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password === 'Itcyanbu123@') {
+      setIsAuthenticated(true);
+      sessionStorage.setItem('modern_carriers_auth', 'true');
+    } else {
+      alert('كلمة المرور غير صحيحة');
+    }
+  };
 
   if (!isAuthenticated) {
     return (
-      <div className="h-full w-full flex items-center justify-center bg-gray-50 p-4" dir="rtl">
-        <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 max-w-md w-full text-center">
-          <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-600">
-            <Lock size={32} />
-          </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">القسم محمي بكلمة مرور</h2>
-          <p className="text-gray-500 mb-6">الرجاء إدخال كلمة المرور للوصول إلى بيانات مؤسسة نواقل</p>
-          
-          <form onSubmit={(e) => {
-            e.preventDefault();
-            if (password === 'Itcyanbu123@') {
-              sessionStorage.setItem('modern_carriers_auth', 'true');
-              setIsAuthenticated(true);
-              setError('');
-            } else {
-              setError('كلمة المرور غير صحيحة');
-            }
-          }}>
-            <input 
-              type="password" 
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="كلمة المرور..."
-              className="w-full px-4 py-3 border border-gray-200 rounded-lg mb-4 text-left focus:outline-none focus:ring-2 focus:ring-blue-500"
-              dir="ltr"
-            />
-            {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-            <button type="submit" className="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition">
-              دخول
-            </button>
-          </form>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] p-6 bg-white rounded-3xl shadow-sm border border-gray-100" dir="rtl">
+        <div className="bg-blue-50 p-4 rounded-full mb-6">
+          <Lock className="text-blue-600" size={48} />
         </div>
+        <h2 className="text-2xl font-black text-gray-900 mb-2">منطقة محمية</h2>
+        <p className="text-gray-500 mb-8 text-center max-w-xs">يرجى إدخال كلمة المرور للوصول إلى بيانات جرد مؤسسة نواقل</p>
+        <form onSubmit={handleLogin} className="w-full max-w-xs space-y-4">
+          <input 
+            type="password" 
+            placeholder="كلمة المرور"
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none transition text-center"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <button className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition shadow-lg shadow-blue-200">
+            دخول النظام
+          </button>
+        </form>
       </div>
     );
   }
 
+  if (loading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin text-blue-600" size={40} /></div>;
+
   return (
-    <div className="p-6 h-full overflow-y-auto bg-gray-50 text-gray-800" dir="rtl">
-      <div className="flex justify-between items-center mb-8">
+    <div className="p-4 md:p-8 max-w-7xl mx-auto animate-in fade-in duration-500" dir="rtl">
+      {/* Header Area */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">بيانات مؤسسة نواقل</h1>
+          <h1 className="text-3xl font-black text-gray-900 mb-1">بيانات مؤسسة نواقل</h1>
           <p className="text-gray-500">سجل جرد أسطول الشاحنات والمعدات والبيانات</p>
         </div>
         <a 
           href="https://modern-carriers.lovable.app/" 
           target="_blank" 
           rel="noopener noreferrer"
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+          className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-200"
         >
           <span>فتح تطبيق Modern Carriers</span>
           <ExternalLink size={18} />
         </a>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-2 mb-6 border-b pb-2">
+      {/* Tabs Menu */}
+      <div className="flex flex-wrap gap-2 mb-6 border-b pb-2 overflow-x-auto">
         <button 
           onClick={() => setActiveTab('fleet')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-t-lg transition ${activeTab === 'fleet' ? 'bg-white text-blue-600 border-b-2 border-blue-600 font-bold' : 'text-gray-600 hover:bg-gray-200'}`}
+          className={`flex items-center gap-2 px-4 py-2 rounded-t-lg transition whitespace-nowrap ${activeTab === 'fleet' ? 'bg-white text-blue-600 border-b-2 border-blue-600 font-bold' : 'text-gray-600 hover:bg-gray-200'}`}
         >
           <Truck size={18} /> اسطول الشاحنات والمقطورات
         </button>
         <button 
           onClick={() => setActiveTab('drivers')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-t-lg transition ${activeTab === 'drivers' ? 'bg-white text-blue-600 border-b-2 border-blue-600 font-bold' : 'text-gray-600 hover:bg-gray-200'}`}
+          className={`flex items-center gap-2 px-4 py-2 rounded-t-lg transition whitespace-nowrap ${activeTab === 'drivers' ? 'bg-white text-blue-600 border-b-2 border-blue-600 font-bold' : 'text-gray-600 hover:bg-gray-200'}`}
         >
           <Users size={18} /> بيانات السائقين
         </button>
         <button 
           onClick={() => setActiveTab('custody')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-t-lg transition ${activeTab === 'custody' ? 'bg-white text-blue-600 border-b-2 border-blue-600 font-bold' : 'text-gray-600 hover:bg-gray-200'}`}
+          className={`flex items-center gap-2 px-4 py-2 rounded-t-lg transition whitespace-nowrap ${activeTab === 'custody' ? 'bg-white text-blue-600 border-b-2 border-blue-600 font-bold' : 'text-gray-600 hover:bg-gray-200'}`}
         >
           <FileText size={18} /> العهد والمعدات
         </button>
         <button 
           onClick={() => setActiveTab('devices')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-t-lg transition ${activeTab === 'devices' ? 'bg-white text-blue-600 border-b-2 border-blue-600 font-bold' : 'text-gray-600 hover:bg-gray-200'}`}
+          className={`flex items-center gap-2 px-4 py-2 rounded-t-lg transition whitespace-nowrap ${activeTab === 'devices' ? 'bg-white text-blue-600 border-b-2 border-blue-600 font-bold' : 'text-gray-600 hover:bg-gray-200'}`}
         >
           <Navigation size={18} /> أجهزة التتبع والتقنيات
         </button>
         <button 
           onClick={() => setActiveTab('employees')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-t-lg transition ${activeTab === 'employees' ? 'bg-white text-blue-600 border-b-2 border-blue-600 font-bold' : 'text-gray-600 hover:bg-gray-200'}`}
+          className={`flex items-center gap-2 px-4 py-2 rounded-t-lg transition whitespace-nowrap ${activeTab === 'employees' ? 'bg-white text-blue-600 border-b-2 border-blue-600 font-bold' : 'text-gray-600 hover:bg-gray-200'}`}
         >
           <ClipboardList size={18} /> نموذج بيانات ومتابعة الموظفين
         </button>
         <button 
           onClick={() => setActiveTab('tasks')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-t-lg transition ${activeTab === 'tasks' ? 'bg-white text-blue-600 border-b-2 border-blue-600 font-bold' : 'text-gray-600 hover:bg-gray-200'}`}
+          className={`flex items-center gap-2 px-4 py-2 rounded-t-lg transition whitespace-nowrap ${activeTab === 'tasks' ? 'bg-white text-blue-600 border-b-2 border-blue-600 font-bold' : 'text-gray-600 hover:bg-gray-200'}`}
         >
           <ListTodo size={18} /> المهام التشغيلية
         </button>
         <button 
           onClick={() => setActiveTab('trips')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-t-lg transition ${activeTab === 'trips' ? 'bg-white text-blue-600 border-b-2 border-blue-600 font-bold' : 'text-gray-600 hover:bg-gray-200'}`}
+          className={`flex items-center gap-2 px-4 py-2 rounded-t-lg transition whitespace-nowrap ${activeTab === 'trips' ? 'bg-white text-blue-600 border-b-2 border-blue-600 font-bold' : 'text-gray-600 hover:bg-gray-200'}`}
         >
           <ArrowRightLeft size={18} /> حركة الأسطول
         </button>
         <button 
           onClick={() => setActiveTab('reports')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-t-lg transition ${activeTab === 'reports' ? 'bg-white text-blue-600 border-b-2 border-blue-600 font-bold' : 'text-gray-600 hover:bg-gray-200'}`}
+          className={`flex items-center gap-2 px-4 py-2 rounded-t-lg transition whitespace-nowrap ${activeTab === 'reports' ? 'bg-white text-blue-600 border-b-2 border-blue-600 font-bold' : 'text-gray-600 hover:bg-gray-200'}`}
         >
           <BarChart2 size={18} /> التقارير والتحليلات
         </button>
       </div>
 
-      {/* Action Bar for Employees */}
-      {activeTab === 'employees' && (
-        <div className="mb-4 flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-          <h3 className="text-lg font-bold text-gray-800">إدارة سجل الموظفين</h3>
-          <div className="flex gap-2">
-            <button 
-              onClick={() => {
-                const tableData = data?.employees || [];
-                const headers = ["ID", "Name", "ID Number", "License", "Phone", "ID Expiry", "License Expiry"];
-                const csvRows = [
-                  headers.join(','),
-                  ...tableData.map(e => [e.id, `"${e.name}"`, e.idNumber, `"${e.license}"`, e.phone, e.idExpiry, e.licenseExpiry].join(','))
-                ].join('\n');
-                const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + csvRows;
-                const link = document.createElement("a");
-                link.setAttribute("href", encodeURI(csvContent));
-                link.setAttribute("download", "employees_report.csv");
-                link.click();
-              }}
-              className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition"
-            >
-              <Download size={18} /> تصدير CSV
-            </button>
-            <button 
-              onClick={() => setShowAddForm(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
-            >
-              <Plus size={18} /> إضافة موظف جديد
-            </button>
-          </div>
+      {/* Toolbar Area */}
+      <div className="mb-4 flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+        <h3 className="text-lg font-bold text-gray-800">
+          {activeTab === 'fleet' && 'قائمة الشاحنات'}
+          {activeTab === 'drivers' && 'سجل السائقين'}
+          {activeTab === 'custody' && 'سجل العهد'}
+          {activeTab === 'devices' && 'قائمة أجهزة التتبع'}
+          {activeTab === 'employees' && 'إدارة سجل الموظفين'}
+          {activeTab === 'tasks' && 'سجل المهام اليومية'}
+          {activeTab === 'trips' && 'سجل حركة الذهاب والعودة'}
+          {activeTab === 'reports' && 'لوحة التقارير الذكية'}
+        </h3>
+        <div className="flex gap-2">
+           {activeTab === 'employees' && (
+             <>
+               <button onClick={() => {
+                 const tableData = data?.employees || [];
+                 const headers = ["ID", "Name", "ID Number", "License", "Phone", "ID Expiry", "License Expiry"];
+                 const csvRows = [headers.join(','), ...tableData.map(e => [e.id, `"${e.name}"`, e.idNumber, `"${e.license}"`, e.phone, e.idExpiry, e.licenseExpiry].join(','))].join('\n');
+                 const link = document.createElement("a");
+                 link.setAttribute("href", encodeURI("data:text/csv;charset=utf-8,\uFEFF" + csvRows));
+                 link.setAttribute("download", "employees_report.csv");
+                 link.click();
+               }} className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition">
+                 <Download size={18} /> تصدير
+               </button>
+               <button onClick={() => setShowAddForm(true)} className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+                 <Plus size={18} /> إضافة موظف
+               </button>
+             </>
+           )}
+           {activeTab === 'tasks' && (
+             <button onClick={() => setShowTaskForm(true)} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+               <Plus size={18} /> إضافة مهمة
+             </button>
+           )}
+           {activeTab === 'trips' && (
+             <button onClick={() => setShowTripForm(true)} className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition">
+               <Map size={18} /> تسجيل رحلة
+             </button>
+           )}
         </div>
-      )}
+      </div>
 
-      {activeTab === 'tasks' && (
-        <div className="mb-4 flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-          <h3 className="text-lg font-bold text-gray-800">سجل المهام اليومية</h3>
-          <button 
-            onClick={() => setShowTaskForm(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-          >
-            <Plus size={18} /> إضافة مهمة جديدة
-          </button>
-        </div>
-      )}
-
-      {activeTab === 'trips' && (
-        <div className="mb-4 flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-          <h3 className="text-lg font-bold text-gray-800">سجل حركة الذهاب والعودة</h3>
-          <button 
-            onClick={() => setShowTripForm(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
-          >
-            <Map size={18} /> تسجيل رحلة جديدة
-          </button>
-        </div>
-      )}
-
-      {/* Content */}
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+      {/* Main Content Area */}
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 min-h-[400px]">
         {data && activeTab === 'fleet' && (
-          <div className="overflow-x-auto">
-            <table className="w-full text-right">
-              <thead>
-                <tr className="bg-gray-50 border-b">
-                  <th className="p-3">م</th>
-                  <th className="p-3">نوع المركبة</th>
-                  <th className="p-3">رقم اللوحة</th>
-                  <th className="p-3">الموديل</th>
-                  <th className="p-3">تاريخ الانتهاء</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.fleet.map((item, i) => (
-                  <tr key={i} className="border-b hover:bg-gray-50">
-                    <td className="p-3">{item.id}</td>
-                    <td className="p-3 font-semibold">{item.type}</td>
-                    <td className="p-3 text-gray-600">{item.plate || '-'}</td>
-                    <td className="p-3 text-gray-600">{item.model || '-'}</td>
-                    <td className="p-3 text-gray-600">{item.expiry || '-'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {data && activeTab === 'drivers' && (
-          <div className="overflow-x-auto">
-            <table className="w-full text-right">
-              <thead>
-                <tr className="bg-gray-50 border-b">
-                  <th className="p-3">م</th>
-                  <th className="p-3">اسم السائق</th>
-                  <th className="p-3">رقم الجوال</th>
-                  <th className="p-3">رقم اللوحة</th>
-                  <th className="p-3">تاريخ انتهاء الرخصة</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.drivers.map((item, i) => (
-                  <tr key={i} className="border-b hover:bg-gray-50">
-                    <td className="p-3">{item.id}</td>
-                    <td className="p-3 font-semibold">{item.name}</td>
-                    <td className="p-3 text-blue-600">{item.phone || '-'}</td>
-                    <td className="p-3 text-gray-600">{item.plate || '-'}</td>
-                    <td className="p-3 text-gray-600">{item.licenseExpiry || '-'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {data && activeTab === 'custody' && (
-          <div className="overflow-x-auto">
-            <table className="w-full text-right">
-              <thead>
-                <tr className="bg-gray-50 border-b">
-                  <th className="p-3">م</th>
-                  <th className="p-3">اسم السائق</th>
-                  <th className="p-3">رقم الهوية</th>
-                  <th className="p-3">العهدة</th>
-                  <th className="p-3">الحالة</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.custody.map((item, i) => (
-                  <tr key={i} className="border-b hover:bg-gray-50">
-                    <td className="p-3">{item.id}</td>
-                    <td className="p-3 font-semibold">{item.driverName}</td>
-                    <td className="p-3 text-gray-600">{item.idNumber || '-'}</td>
-                    <td className="p-3 text-gray-600">{item.type || '-'}</td>
-                    <td className="p-3 text-gray-600">
-                      <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-sm">{item.status || 'جيدة'}</span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {data && activeTab === 'devices' && (
-          <div className="overflow-x-auto">
-            <table className="w-full text-right">
-              <thead>
-                <tr className="bg-gray-50 border-b">
-                  <th className="p-3">م</th>
-                  <th className="p-3">نوع الجهاز</th>
-                  <th className="p-3">المركب عليها</th>
-                  <th className="p-3">الرقم / العدد</th>
-                  <th className="p-3">الحالة</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.devices.map((item, i) => (
-                  <tr key={i} className="border-b hover:bg-gray-50">
-                    <td className="p-3">{item.id}</td>
-                    <td className="p-3 font-semibold">{item.type}</td>
-                    <td className="p-3 text-gray-600">{item.truck || '-'}</td>
-                    <td className="p-3 text-gray-600">{item.serial || '-'}</td>
-                    <td className="p-3 text-gray-600">
-                      <span className={`px-2 py-1 rounded text-sm ${item.status === 'فعال' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                        {item.status || 'فعال'}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <div className="overflow-x-auto"><table className="w-full text-right"><thead><tr className="bg-gray-50 border-b"><th className="p-3">م</th><th className="p-3">النوع</th><th className="p-3">اللوحة</th><th className="p-3">الموديل</th><th className="p-3">انتهاء الاستمارة</th></tr></thead><tbody>{data.fleet.map((item, i) => (<tr key={i} className="border-b hover:bg-gray-50"><td className="p-3">{item.id}</td><td className="p-3 font-semibold">{item.type}</td><td className="p-3 font-mono">{item.plate}</td><td className="p-3">{item.model}</td><td className="p-3 text-red-600 font-bold">{item.expiry}</td></tr>))}</tbody></table></div>
         )}
 
         {data && activeTab === 'employees' && (
           <div className="overflow-x-auto">
             <table className="w-full text-right">
-              <thead>
-                <tr className="bg-gray-50 border-b">
-                  <th className="p-3">م</th>
-                  <th className="p-3">اسم الموظف</th>
-                  <th className="p-3">رقم الهوية</th>
-                  <th className="p-3">الرخصة</th>
-                  <th className="p-3">رقم الجوال</th>
-                  <th className="p-3">انتهاء الهوية</th>
-                  <th className="p-3">تاريخ انتهاء الرخصة</th>
-                  <th className="p-3">إجراءات</th>
-                </tr>
-              </thead>
+              <thead><tr className="bg-gray-50 border-b"><th className="p-3">م</th><th className="p-3">اسم الموظف</th><th className="p-3">رقم الهوية</th><th className="p-3">الرخصة</th><th className="p-3">رقم الجوال</th><th className="p-3">تاريخ انتهاء الرخصة</th><th className="p-3">إجراءات</th></tr></thead>
               <tbody>
                 {data.employees?.map((item, i) => (
                   <tr key={i} className="border-b hover:bg-gray-50">
-                    <td className="p-3">{item.id}</td>
-                    <td className="p-3 font-semibold">{item.name}</td>
-                    <td className="p-3 text-gray-600">{item.idNumber || '-'}</td>
-                    <td className="p-3 text-gray-600">{item.license || '-'}</td>
-                    <td className="p-3 text-blue-600" dir="ltr" style={{ textAlign: 'right' }}>{item.phone || '-'}</td>
-                    <td className="p-3 text-gray-600">{item.idExpiry || '-'}</td>
-                    <td className="p-3 text-gray-600">{item.licenseExpiry || '-'}</td>
+                    <td className="p-3">{i+1}</td>
+                    <td className="p-3 font-bold">{item.name}</td>
+                    <td className="p-3">{item.idNumber}</td>
+                    <td className="p-3 text-xs">{item.license}</td>
+                    <td className="p-3" dir="ltr">{item.phone}</td>
+                    <td className="p-3">{item.licenseExpiry}</td>
                     <td className="p-3 flex gap-2">
-                      <button 
-                        onClick={() => {
-                          setEditingItem(item);
-                          setIsEditing(true);
-                        }}
-                        className="p-1.5 text-blue-600 hover:bg-blue-50 rounded"
-                        title="تعديل"
-                      >
-                        <Pencil size={16} />
-                      </button>
-                      <button 
-                        onClick={() => {
-                          if (confirm('هل أنت متأكد من حذف هذا الموظف؟')) {
-                            const updated = data.employees.filter(e => e.id !== item.id);
-                            const newData = { ...data, employees: updated };
-                            setData(newData);
-                            localStorage.setItem('modern_carriers_employees', JSON.stringify(updated));
-                          }
-                        }}
-                        className="p-1.5 text-red-600 hover:bg-red-50 rounded"
-                        title="حذف"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      <button onClick={() => { setEditingItem(item); setIsEditing(true); }} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded"><Pencil size={16} /></button>
+                      <button onClick={() => {
+                        if (confirm('حذف الموظف؟')) {
+                          const updated = data.employees.filter(e => e.id !== item.id);
+                          setData({ ...data, employees: updated });
+                          localStorage.setItem('modern_carriers_employees', JSON.stringify(updated));
+                        }
+                      }} className="p-1.5 text-red-600 hover:bg-red-50 rounded"><Trash2 size={16} /></button>
                     </td>
                   </tr>
                 ))}
@@ -422,103 +261,75 @@ export default function ModernCarriersPage() {
         {data && activeTab === 'tasks' && (
           <div className="overflow-x-auto">
             <table className="w-full text-right">
-              <thead>
-                <tr className="bg-gray-50 border-b">
-                  <th className="p-3">م</th>
-                  <th className="p-3">المهمة</th>
-                  <th className="p-3">المسؤول</th>
-                  <th className="p-3">التاريخ</th>
-                  <th className="p-3">الحالة</th>
-                  <th className="p-3">إجراءات</th>
-                </tr>
-              </thead>
+              <thead><tr className="bg-gray-50 border-b"><th className="p-3">م</th><th className="p-3">المهمة</th><th className="p-3">المسؤول</th><th className="p-3">الحالة</th><th className="p-3">إجراءات</th></tr></thead>
               <tbody>
                 {data.tasks?.map((item, i) => (
-                  <tr key={i} className="border-b hover:bg-gray-50">
-                    <td className="p-3">{item.id}</td>
-                    <td className="p-3 font-semibold">{item.title}</td>
-                    <td className="p-3 text-gray-600">{item.assignedTo}</td>
-                    <td className="p-3 text-gray-500">{item.date}</td>
+                  <tr key={i} className="border-b">
+                    <td className="p-3">{i+1}</td>
+                    <td className="p-3 font-bold">{item.title}</td>
+                    <td className="p-3">{item.assignedTo}</td>
                     <td className="p-3">
-                      <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${
-                        item.status === 'completed' ? 'bg-green-100 text-green-700' :
-                        item.status === 'in-progress' ? 'bg-blue-100 text-blue-700' :
-                        'bg-orange-100 text-orange-700'
-                      }`}>
-                        {item.status === 'completed' ? 'مكتملة' : item.status === 'in-progress' ? 'قيد التنفيذ' : 'معلقة'}
+                      <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${item.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
+                        {item.status === 'completed' ? 'مكتملة' : 'معلقة'}
                       </span>
                     </td>
                     <td className="p-3 flex gap-2">
-                      <button 
-                        onClick={() => {
-                          const updated = data.tasks.map(t => t.id === item.id ? { ...t, status: t.status === 'completed' ? 'pending' : 'completed' } as TaskItem : t);
+                      <button onClick={() => {
+                        const updated = data.tasks.map(t => t.id === item.id ? { ...t, status: t.status === 'completed' ? 'pending' : 'completed' } as TaskItem : t);
+                        setData({ ...data, tasks: updated });
+                        localStorage.setItem('modern_carriers_tasks', JSON.stringify(updated));
+                      }} className="p-1.5 text-green-600 hover:bg-green-50 rounded">
+                        {item.status === 'completed' ? <Circle size={16} /> : <CheckCircle2 size={16} />}
+                      </button>
+                      <button onClick={() => {
+                        if (confirm('حذف المهمة؟')) {
+                          const updated = data.tasks.filter(t => t.id !== item.id);
                           setData({ ...data, tasks: updated });
                           localStorage.setItem('modern_carriers_tasks', JSON.stringify(updated));
-                        }}
-                        className={`p-1.5 rounded ${item.status === 'completed' ? 'text-orange-600 hover:bg-orange-50' : 'text-green-600 hover:bg-green-50'}`}
-                      >
-                        {item.status === 'completed' ? <Circle size={16} /> : <CheckCircle2 s            </table>
+                        }
+                      }} className="p-1.5 text-red-600 hover:bg-red-50 rounded"><Trash2 size={16} /></button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
 
         {data && activeTab === 'trips' && (
           <div className="overflow-x-auto">
             <table className="w-full text-right">
-              <thead>
-                <tr className="bg-gray-50 border-b">
-                  <th className="p-3">م</th>
-                  <th className="p-3">الشاحنة</th>
-                  <th className="p-3">السائق</th>
-                  <th className="p-3">الوجهة</th>
-                  <th className="p-3">وقت الذهاب</th>
-                  <th className="p-3">وقت العودة</th>
-                  <th className="p-3">الحالة</th>
-                  <th className="p-3">إجراءات</th>
-                </tr>
-              </thead>
+              <thead><tr className="bg-gray-50 border-b"><th className="p-3">م</th><th className="p-3">الشاحنة</th><th className="p-3">السائق</th><th className="p-3">الوجهة</th><th className="p-3">الذهاب</th><th className="p-3">العودة</th><th className="p-3">الحالة</th><th className="p-3">إجراءات</th></tr></thead>
               <tbody>
                 {data.trips?.map((item, i) => (
-                  <tr key={i} className="border-b hover:bg-gray-50">
-                    <td className="p-3">{item.id}</td>
-                    <td className="p-3 font-semibold">{item.truck}</td>
+                  <tr key={i} className="border-b">
+                    <td className="p-3">{i+1}</td>
+                    <td className="p-3 font-bold">{item.truck}</td>
                     <td className="p-3">{item.driver}</td>
-                    <td className="p-3 text-gray-600">{item.destination}</td>
-                    <td className="p-3 text-xs text-gray-500" dir="ltr" style={{ textAlign: 'right' }}>{item.departureDate}</td>
-                    <td className="p-3 text-xs text-gray-500" dir="ltr" style={{ textAlign: 'right' }}>{item.returnDate || '-'}</td>
+                    <td className="p-3">{item.destination}</td>
+                    <td className="p-3 text-xs" dir="ltr">{item.departureDate}</td>
+                    <td className="p-3 text-xs" dir="ltr">{item.returnDate || '-'}</td>
                     <td className="p-3">
-                      <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${
-                        item.status === 'returned' ? 'bg-green-100 text-green-700' : 'bg-purple-100 text-purple-700'
-                      }`}>
+                      <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${item.status === 'returned' ? 'bg-green-100 text-green-700' : 'bg-purple-100 text-purple-700'}`}>
                         {item.status === 'returned' ? 'عادت' : 'في الطريق'}
                       </span>
                     </td>
                     <td className="p-3 flex gap-2">
                       {item.status === 'travelling' && (
-                        <button 
-                          onClick={() => {
-                            const now = new Date().toLocaleString('sv-SE').slice(0, 16).replace('T', ' ');
-                            const updated = data.trips.map(t => t.id === item.id ? { ...t, status: 'returned', returnDate: now } as TripItem : t);
-                            setData({ ...data, trips: updated });
-                            localStorage.setItem('modern_carriers_trips', JSON.stringify(updated));
-                          }}
-                          className="p-1.5 text-green-600 hover:bg-green-50 rounded"
-                          title="تسجيل عودة"
-                        >
-                          <CheckCircle2 size={16} />
-                        </button>
+                        <button onClick={() => {
+                          const now = new Date().toLocaleString('sv-SE').slice(0, 16).replace('T', ' ');
+                          const updated = data.trips.map(t => t.id === item.id ? { ...t, status: 'returned', returnDate: now } as TripItem : t);
+                          setData({ ...data, trips: updated });
+                          localStorage.setItem('modern_carriers_trips', JSON.stringify(updated));
+                        }} className="p-1.5 text-green-600 hover:bg-green-50 rounded"><CheckCircle2 size={16} /></button>
                       )}
-                      <button 
-                         onClick={() => {
-                          if (confirm('حذف الرحلة؟')) {
-                            const updated = data.trips.filter(t => t.id !== item.id);
-                            setData({ ...data, trips: updated });
-                            localStorage.setItem('modern_carriers_trips', JSON.stringify(updated));
-                          }
-                        }}
-                        className="p-1.5 text-red-600 hover:bg-red-50 rounded"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      <button onClick={() => {
+                        if (confirm('حذف الرحلة؟')) {
+                          const updated = data.trips.filter(t => t.id !== item.id);
+                          setData({ ...data, trips: updated });
+                          localStorage.setItem('modern_carriers_trips', JSON.stringify(updated));
+                        }
+                      }} className="p-1.5 text-red-600 hover:bg-red-50 rounded"><Trash2 size={16} /></button>
                     </td>
                   </tr>
                 ))}
@@ -529,136 +340,52 @@ export default function ModernCarriersPage() {
 
         {data && activeTab === 'reports' && (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-              <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
-                <div className="text-[10px] text-blue-600 mb-1 font-bold">الأسطول</div>
-                <div className="text-xl font-black text-blue-900">{data.fleet.length}</div>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+              <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 text-center">
+                <div className="text-[10px] text-blue-600 font-bold mb-1">الأسطول</div>
+                <div className="text-xl font-black">{data.fleet.length}</div>
               </div>
-              <div className="bg-green-50 p-4 rounded-xl border border-green-100">
-                <div className="text-[10px] text-green-600 mb-1 font-bold">الموظفين</div>
-                <div className="text-xl font-black text-green-900">{data.employees?.length || 0}</div>
+              <div className="bg-purple-50 p-4 rounded-xl border border-purple-100 text-center">
+                <div className="text-[10px] text-purple-600 font-bold mb-1">رحلات نشطة</div>
+                <div className="text-xl font-black">{data.trips?.filter(t => t.status === 'travelling').length}</div>
               </div>
-              <div className="bg-purple-50 p-4 rounded-xl border border-purple-100">
-                <div className="text-[10px] text-purple-600 mb-1 font-bold">رحلات نشطة</div>
-                <div className="text-xl font-black text-purple-900">{data.trips?.filter(t => t.status === 'travelling').length || 0}</div>
+              <div className="bg-green-50 p-4 rounded-xl border border-green-100 text-center">
+                <div className="text-[10px] text-green-600 font-bold mb-1">المهام المكتملة</div>
+                <div className="text-xl font-black">{data.tasks?.filter(t => t.status === 'completed').length}</div>
               </div>
-              <div className="bg-orange-50 p-4 rounded-xl border border-orange-100">
-                <div className="text-[10px] text-orange-600 mb-1 font-bold">إنجاز المهام</div>
-                <div className="text-xl font-black text-orange-900">{Math.round(((data.tasks?.filter(t => t.status === 'completed').length || 0) / (data.tasks?.length || 1)) * 100)}%</div>
+              <div className="bg-orange-50 p-4 rounded-xl border border-orange-100 text-center">
+                <div className="text-[10px] text-orange-600 font-bold mb-1">بانتظار العودة</div>
+                <div className="text-xl font-black">{data.trips?.filter(t => t.status === 'travelling').length}</div>
               </div>
-              <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
-                <div className="text-[10px] text-indigo-600 mb-1 font-bold">إجمالي الرحلات</div>
-                <div className="text-xl font-black text-indigo-900">{data.trips?.length || 0}</div>
+              <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100 text-center">
+                <div className="text-[10px] text-indigo-600 font-bold mb-1">إجمالي الرحلات</div>
+                <div className="text-xl font-black">{data.trips?.length}</div>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-               <div className="border rounded-xl p-6 bg-white shadow-sm">
-                  <h4 className="font-bold mb-4 flex items-center gap-2 text-gray-800">
-                    <ArrowRightLeft size={18} className="text-purple-500" />
-                    حركة الرحلات (Movement Analysis)
-                  </h4>
-                  <div className="space-y-6">
-                    <div className="flex justify-around items-end h-32">
-                       <div className="text-center w-20">
-                          <div className="bg-purple-500 w-12 mx-auto rounded-t" style={{ height: `${(data.trips?.filter(t => t.status === 'travelling').length || 0) * 20}px` }}></div>
-                          <div className="text-[10px] mt-2">في الطريق</div>
-                       </div>
-                       <div className="text-center w-20">
-                          <div className="bg-green-500 w-12 mx-auto rounded-t" style={{ height: `${(data.trips?.filter(t => t.status === 'returned').length || 0) * 20}px` }}></div>
-                          <div className="text-[10px] mt-2">عادت</div>
-                       </div>
-                    </div>
-                  </div>
-               </div>
-               
-               <div className="border rounded-xl p-6 bg-white shadow-sm">
-                  <h4 className="font-bold mb-4 flex items-center gap-2 text-gray-800">
-                    <CheckCircle2 size={18} className="text-green-500" />
-                    تقرير إنجاز المهام (Task Completion)
-                  </h4>
-                  <div className="relative h-24 flex items-center justify-center">
-                      <div className="text-center">
-                        <div className="text-2xl font-black text-gray-900">
-                          {Math.round(((data.tasks?.filter(t => t.status === 'completed').length || 0) / (data.tasks?.length || 1)) * 100)}%
-                        </div>
-                      </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-xs text-center">
-                    <div className="p-2 bg-green-50 rounded text-green-700">مكتملة: {data.tasks?.filter(t => t.status === 'completed').length}</div>
-                    <div className="p-2 bg-red-50 rounded text-red-700">متبقية: {data.tasks?.filter(t => t.status !== 'completed').length}</div>
-                  </div>
-               </div>
-            </div>
-
-            <div className="bg-gray-50 p-6 rounded-xl border border-dashed border-gray-300">
-              <h4 className="font-bold mb-2">توصيات حركة الأسطول</h4>
-              <p className="text-sm text-gray-600">
-                يوجد حالياً {data.trips?.filter(t => t.status === 'travelling').length} شاحنة في الطريق. جميع الرحلات تسير وفق الجدول الزمني المحدد. ننصح بمتابعة الشاحنة المتوجهة للرياض نظراً لظروف الطريق.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                  <div className="flex justify-between items-center mb-4">
-                    <h4 className="font-bold flex items-center gap-2">
-                      <ArrowRightLeft size={18} className="text-purple-600" />
-                      أحدث الرحلات (Trip History)
-                    </h4>
-                    <button 
-                      onClick={() => {
-                        const tableData = data?.trips || [];
-                        const headers = ["ID", "Truck", "Driver", "Destination", "Departure", "Return", "Status"];
-                        const csvRows = [
-                          headers.join(','),
-                          ...tableData.map(t => [t.id, t.truck, `"${t.driver}"`, `"${t.destination}"`, t.departureDate, t.returnDate || '', t.status].join(','))
-                        ].join('\n');
-                        const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + csvRows;
-                        const link = document.createElement("a");
-                        link.setAttribute("href", encodeURI(csvContent));
-                        link.setAttribute("download", "fleet_movement_report.csv");
-                        link.click();
-                      }}
-                      className="text-[10px] bg-purple-50 text-purple-700 px-2 py-1 rounded hover:bg-purple-100 transition"
-                    >
-                      تصدير تقرير الحركة
-                    </button>
-                  </div>
-                  <div className="text-[11px] space-y-2">
-                    {data.trips?.slice(-5).reverse().map((t, i) => (
-                      <div key={i} className="flex justify-between items-center p-2 border-b last:border-0 hover:bg-gray-50 rounded transition">
-                        <div className="flex gap-3 items-center">
-                          <span className="font-bold text-gray-800">{t.truck}</span>
-                          <span className="text-gray-500">{t.destination}</span>
-                        </div>
-                        <div className="flex gap-3 items-center">
-                           <span className={`px-1.5 py-0.5 rounded text-[9px] ${t.status === 'returned' ? 'bg-green-50 text-green-600' : 'bg-purple-50 text-purple-600'}`}>
-                             {t.status === 'returned' ? 'عادت' : 'في الطريق'}
-                           </span>
-                           <span className="text-gray-400">{t.departureDate.split(' ')[0]}</span>
-                        </div>
-                      </div>
-                    ))}
+                  <h4 className="font-bold mb-4 flex items-center gap-2"><ArrowRightLeft size={18} className="text-purple-600" /> تحليل الرحلات</h4>
+                  <div className="flex justify-around items-end h-32">
+                     <div className="text-center w-20">
+                        <div className="bg-purple-500 w-12 mx-auto rounded-t" style={{ height: `${(data.trips?.filter(t => t.status === 'travelling').length || 1) * 20}px` }}></div>
+                        <div className="text-[10px] mt-2">في الطريق</div>
+                     </div>
+                     <div className="text-center w-20">
+                        <div className="bg-green-500 w-12 mx-auto rounded-t" style={{ height: `${(data.trips?.filter(t => t.status === 'returned').length || 1) * 20}px` }}></div>
+                        <div className="text-[10px] mt-2">عادت</div>
+                     </div>
                   </div>
                </div>
-
                <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                  <h4 className="font-bold mb-4 flex items-center gap-2">
-                    <Users size={18} className="text-blue-600" />
-                    تحليل أداء السائقين (Driver Trips)
-                  </h4>
+                  <h4 className="font-bold mb-4 flex items-center gap-2"><Users size={18} className="text-blue-600" /> أكثر السائقين حركة</h4>
                   <div className="space-y-4">
                     {Array.from(new Set(data.trips?.map(t => t.driver))).slice(0, 3).map((driver, i) => {
                       const count = data.trips?.filter(t => t.driver === driver).length || 0;
                       return (
                         <div key={i}>
-                          <div className="flex justify-between text-[11px] mb-1">
-                            <span>{driver}</span>
-                            <span>{count} رحلات</span>
-                          </div>
-                          <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
-                            <div className="bg-blue-600 h-full transition-all duration-1000" style={{ width: `${(count / (data.trips?.length || 1)) * 100}%` }}></div>
-                          </div>
+                          <div className="flex justify-between text-[11px] mb-1"><span>{driver}</span><span>{count} رحلة</span></div>
+                          <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden"><div className="bg-blue-600 h-full" style={{ width: `${(count / (data.trips?.length || 1)) * 100}%` }}></div></div>
                         </div>
                       );
                     })}
@@ -669,262 +396,89 @@ export default function ModernCarriersPage() {
         )}
       </div>
 
-      {/* Trip Modal */}
+      {/* Modals */}
       {showTripForm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" dir="rtl">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
-            <div className="p-6 border-b flex justify-between items-center bg-gray-50">
-              <h3 className="text-xl font-bold text-gray-900">تسجيل رحلة جديدة</h3>
-              <button onClick={() => setShowTripForm(false)} className="text-gray-400 hover:text-gray-600">
-                <X size={24} />
-              </button>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold">تسجيل رحلة جديدة</h3>
+              <button onClick={() => setShowTripForm(false)}><X /></button>
             </div>
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">الشاحنة</label>
-                <input 
-                  type="text" 
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                  value={newTrip.truck || ''}
-                  onChange={(e) => setNewTrip({...newTrip, truck: e.target.value})}
-                  placeholder="رقم اللوحة..."
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">السائق</label>
-                <input 
-                  type="text" 
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                  value={newTrip.driver || ''}
-                  onChange={(e) => setNewTrip({...newTrip, driver: e.target.value})}
-                  placeholder="اسم السائق..."
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">الوجهة</label>
-                <input 
-                  type="text" 
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                  value={newTrip.destination || ''}
-                  onChange={(e) => setNewTrip({...newTrip, destination: e.target.value})}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">وقت الذهاب</label>
-                <input 
-                  type="datetime-local" 
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                  value={newTrip.departureDate || ''}
-                  onChange={(e) => setNewTrip({...newTrip, departureDate: e.target.value.replace('T', ' ')})}
-                />
-              </div>
-            </div>
-            <div className="p-6 bg-gray-50 border-t flex gap-3">
-              <button 
-                onClick={() => {
-                  const id = (data?.trips.length || 0) + 1;
-                  const item = { ...newTrip, id, status: 'travelling' } as TripItem;
-                  const updated = [...(data?.trips || []), item];
-                  setData({...data!, trips: updated});
-                  localStorage.setItem('modern_carriers_trips', JSON.stringify(updated));
-                  setShowTripForm(false);
-                  setNewTrip({ status: 'travelling' });
-                }}
-                className="flex-1 bg-purple-600 text-white font-bold py-2 rounded-lg hover:bg-purple-700 transition"
-              >
-                تسجيل الرحلة
-              </button>
+            <div className="space-y-4">
+              <input placeholder="رقم الشاحنة" className="w-full p-2 border rounded" value={newTrip.truck || ''} onChange={e => setNewTrip({...newTrip, truck: e.target.value})} />
+              <input placeholder="اسم السائق" className="w-full p-2 border rounded" value={newTrip.driver || ''} onChange={e => setNewTrip({...newTrip, driver: e.target.value})} />
+              <input placeholder="الوجهة" className="w-full p-2 border rounded" value={newTrip.destination || ''} onChange={e => setNewTrip({...newTrip, destination: e.target.value})} />
+              <input type="datetime-local" className="w-full p-2 border rounded" onChange={e => setNewTrip({...newTrip, departureDate: e.target.value.replace('T', ' ')})} />
+              <button onClick={() => {
+                const item = { ...newTrip, id: Date.now(), status: 'travelling' } as TripItem;
+                const updated = [...(data?.trips || []), item];
+                setData({...data!, trips: updated});
+                localStorage.setItem('modern_carriers_trips', JSON.stringify(updated));
+                setShowTripForm(false);
+              }} className="w-full bg-purple-600 text-white p-3 rounded-xl font-bold">حفظ الرحلة</button>
             </div>
           </div>
         </div>
-      )}lex justify-between text-xs mb-1">
-                        <span>معدل الصيانة</span>
-                        <span>8%</span>
-                      </div>
-                      <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
-                        <div className="bg-red-500 h-full w-[8%]"></div>
-                      </div>
-                    </div>
-                  </div>
-               </div>
-            </div>
+      )}
 
-            <div className="bg-gray-50 p-6 rounded-xl border border-dashed border-gray-300">
-              <h4 className="font-bold mb-2">توصيات النظام (AI Insights)</h4>
-              <p className="text-sm text-gray-600">
-                بناءً على المهام الحالية، يوجد تأخير في "تجديد استمارة شاحنة 9849". ننصح بتكليف مسؤول إضافي لإنهاء المهام المعلقة لزيادة كفاءة الأسطول.
-              </p>
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div className="mt-8 pt-4 border-t border-gray-200 text-center text-[10px] text-gray-400">
-        نسخة النظام v1.2.5 - تحديث المهام والتقارير - 09/05/2026
-      </div>
-
-      {/* Tasks Modal */}
       {showTaskForm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" dir="rtl">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
-            <div className="p-6 border-b flex justify-between items-center bg-gray-50">
-              <h3 className="text-xl font-bold text-gray-900">إضافة مهمة جديدة</h3>
-              <button onClick={() => setShowTaskForm(false)} className="text-gray-400 hover:text-gray-600">
-                <X size={24} />
-              </button>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold">إضافة مهمة جديدة</h3>
+              <button onClick={() => setShowTaskForm(false)}><X /></button>
             </div>
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">عنوان المهمة</label>
-                <input 
-                  type="text" 
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                  value={newTask.title || ''}
-                  onChange={(e) => setNewTask({...newTask, title: e.target.value})}
-                  placeholder="مثلاً: فحص الإطارات..."
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">المسؤول</label>
-                <input 
-                  type="text" 
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                  value={newTask.assignedTo || ''}
-                  onChange={(e) => setNewTask({...newTask, assignedTo: e.target.value})}
-                  placeholder="اسم الموظف أو القسم"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">تاريخ الاستحقاق</label>
-                <input 
-                  type="date" 
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                  value={newTask.date || ''}
-                  onChange={(e) => setNewTask({...newTask, date: e.target.value})}
-                />
-              </div>
-            </div>
-            <div className="p-6 bg-gray-50 border-t flex gap-3">
-              <button 
-                onClick={() => {
-                  const id = (data?.tasks.length || 0) + 1;
-                  const item = { ...newTask, id, status: 'pending' } as TaskItem;
-                  const updated = [...(data?.tasks || []), item];
-                  setData({...data!, tasks: updated});
-                  localStorage.setItem('modern_carriers_tasks', JSON.stringify(updated));
-                  setShowTaskForm(false);
-                  setNewTask({ status: 'pending' });
-                }}
-                className="flex-1 bg-blue-600 text-white font-bold py-2 rounded-lg hover:bg-blue-700 transition"
-              >
-                إضافة المهمة
-              </button>
+            <div className="space-y-4">
+              <input placeholder="عنوان المهمة" className="w-full p-2 border rounded" value={newTask.title || ''} onChange={e => setNewTask({...newTask, title: e.target.value})} />
+              <input placeholder="المسؤول" className="w-full p-2 border rounded" value={newTask.assignedTo || ''} onChange={e => setNewTask({...newTask, assignedTo: e.target.value})} />
+              <input type="date" className="w-full p-2 border rounded" value={newTask.date || ''} onChange={e => setNewTask({...newTask, date: e.target.value})} />
+              <button onClick={() => {
+                const item = { ...newTask, id: Date.now(), status: 'pending' } as TaskItem;
+                const updated = [...(data?.tasks || []), item];
+                setData({...data!, tasks: updated});
+                localStorage.setItem('modern_carriers_tasks', JSON.stringify(updated));
+                setShowTaskForm(false);
+              }} className="w-full bg-blue-600 text-white p-3 rounded-xl font-bold">حفظ المهمة</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Add/Edit Modal */}
       {(showAddForm || isEditing) && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" dir="rtl">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden">
-            <div className="p-6 border-b flex justify-between items-center bg-gray-50">
-              <h3 className="text-xl font-bold text-gray-900">
-                {isEditing ? 'تعديل بيانات موظف' : 'إضافة موظف جديد'}
-              </h3>
-              <button onClick={() => { setShowAddForm(false); setIsEditing(false); setEditingItem(null); }} className="text-gray-400 hover:text-gray-600">
-                <X size={24} />
-              </button>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold">{isEditing ? 'تعديل موظف' : 'إضافة موظف'}</h3>
+              <button onClick={() => { setShowAddForm(false); setIsEditing(false); }}><X /></button>
             </div>
-            <div className="p-6 grid grid-cols-2 gap-4">
-              <div className="col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">اسم الموظف</label>
-                <input 
-                  type="text" 
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                  value={isEditing ? editingItem?.name : newEmployee.name}
-                  onChange={(e) => isEditing ? setEditingItem({...editingItem!, name: e.target.value}) : setNewEmployee({...newEmployee, name: e.target.value})}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">رقم الهوية</label>
-                <input 
-                  type="text" 
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                  value={isEditing ? editingItem?.idNumber : newEmployee.idNumber}
-                  onChange={(e) => isEditing ? setEditingItem({...editingItem!, idNumber: parseInt(e.target.value)}) : setNewEmployee({...newEmployee, idNumber: parseInt(e.target.value)})}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">الرخصة</label>
-                <input 
-                  type="text" 
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                  value={isEditing ? editingItem?.license : newEmployee.license}
-                  onChange={(e) => isEditing ? setEditingItem({...editingItem!, license: e.target.value}) : setNewEmployee({...newEmployee, license: e.target.value})}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">رقم الجوال</label>
-                <input 
-                  type="text" 
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                  value={isEditing ? editingItem?.phone : newEmployee.phone}
-                  onChange={(e) => isEditing ? setEditingItem({...editingItem!, phone: e.target.value}) : setNewEmployee({...newEmployee, phone: e.target.value})}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">انتهاء الهوية</label>
-                <input 
-                  type="text" 
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                  value={isEditing ? editingItem?.idExpiry : newEmployee.idExpiry}
-                  onChange={(e) => isEditing ? setEditingItem({...editingItem!, idExpiry: e.target.value}) : setNewEmployee({...newEmployee, idExpiry: e.target.value})}
-                />
-              </div>
-              <div className="col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">تاريخ انتهاء الرخصة</label>
-                <input 
-                  type="text" 
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                  value={isEditing ? editingItem?.licenseExpiry : newEmployee.licenseExpiry}
-                  onChange={(e) => isEditing ? setEditingItem({...editingItem!, licenseExpiry: e.target.value}) : setNewEmployee({...newEmployee, licenseExpiry: e.target.value})}
-                />
-              </div>
-            </div>
-            <div className="p-6 bg-gray-50 border-t flex gap-3">
-              <button 
-                onClick={() => {
-                  if (isEditing && editingItem) {
-                    const updated = data?.employees.map(e => e.id === editingItem.id ? editingItem : e) || [];
-                    setData({...data!, employees: updated});
-                    localStorage.setItem('modern_carriers_employees', JSON.stringify(updated));
-                    setIsEditing(false);
-                    setEditingItem(null);
-                  } else {
-                    const id = (data?.employees.length || 0) + 1;
-                    const item = { ...newEmployee, id } as EmployeeItem;
-                    const updated = [...(data?.employees || []), item];
-                    setData({...data!, employees: updated});
-                    localStorage.setItem('modern_carriers_employees', JSON.stringify(updated));
-                    setShowAddForm(false);
-                    setNewEmployee({});
-                  }
-                }}
-                className="flex-1 bg-blue-600 text-white font-bold py-2 rounded-lg hover:bg-blue-700 transition flex items-center justify-center gap-2"
-              >
-                <Save size={18} /> حفظ البيانات
-              </button>
-              <button 
-                onClick={() => { setShowAddForm(false); setIsEditing(false); setEditingItem(null); }}
-                className="flex-1 bg-white border border-gray-200 text-gray-600 font-bold py-2 rounded-lg hover:bg-gray-50 transition"
-              >
-                إلغاء
-              </button>
+            <div className="grid grid-cols-2 gap-4">
+              <input className="col-span-2 p-2 border rounded" placeholder="الاسم" value={isEditing ? editingItem?.name : newEmployee.name} onChange={e => isEditing ? setEditingItem({...editingItem!, name: e.target.value}) : setNewEmployee({...newEmployee, name: e.target.value})} />
+              <input className="p-2 border rounded" placeholder="رقم الهوية" value={isEditing ? editingItem?.idNumber : newEmployee.idNumber} onChange={e => isEditing ? setEditingItem({...editingItem!, idNumber: parseInt(e.target.value)}) : setNewEmployee({...newEmployee, idNumber: parseInt(e.target.value)})} />
+              <input className="p-2 border rounded" placeholder="الرخصة" value={isEditing ? editingItem?.license : newEmployee.license} onChange={e => isEditing ? setEditingItem({...editingItem!, license: e.target.value}) : setNewEmployee({...newEmployee, license: e.target.value})} />
+              <input className="p-2 border rounded" placeholder="رقم الجوال" value={isEditing ? editingItem?.phone : newEmployee.phone} onChange={e => isEditing ? setEditingItem({...editingItem!, phone: e.target.value}) : setNewEmployee({...newEmployee, phone: e.target.value})} />
+              <input className="p-2 border rounded" placeholder="تاريخ الرخصة" value={isEditing ? editingItem?.licenseExpiry : newEmployee.licenseExpiry} onChange={e => isEditing ? setEditingItem({...editingItem!, licenseExpiry: e.target.value}) : setNewEmployee({...newEmployee, licenseExpiry: e.target.value})} />
+              <button onClick={() => {
+                if (isEditing && editingItem) {
+                  const updated = data?.employees.map(e => e.id === editingItem.id ? editingItem : e) || [];
+                  setData({...data!, employees: updated});
+                  localStorage.setItem('modern_carriers_employees', JSON.stringify(updated));
+                  setIsEditing(false);
+                } else {
+                  const item = { ...newEmployee, id: Date.now() } as EmployeeItem;
+                  const updated = [...(data?.employees || []), item];
+                  setData({...data!, employees: updated});
+                  localStorage.setItem('modern_carriers_employees', JSON.stringify(updated));
+                  setShowAddForm(false);
+                }
+              }} className="col-span-2 bg-blue-600 text-white p-3 rounded-xl font-bold">حفظ الموظف</button>
             </div>
           </div>
         </div>
       )}
+
+      <div className="mt-8 text-center text-[10px] text-gray-400">
+        نسخة v1.2.6 - تحديث شامل لحركة الأسطول والتقارير
+      </div>
     </div>
   );
 }
