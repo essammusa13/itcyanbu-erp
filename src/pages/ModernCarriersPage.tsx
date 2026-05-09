@@ -5,7 +5,7 @@ interface FleetItem { id: number; type: string; plate: string; model: number; ex
 interface CustodyItem { id: number; driverName: string; idNumber: number; type: string; status: string; }
 interface DeviceItem { id: number; plate: string; sn: string; type: string; status: string; }
 interface DriverItem { id: number; name: string; plate: string; licenseExpiry: string; phone: number; }
-interface EmployeeItem { id: number; name: string; idNumber: number; license: string; phone: string; idExpiry: string; licenseExpiry: string; }
+interface EmployeeItem { id: number; name: string; idNumber: number; license: string; phone: string; idExpiry: string; licenseExpiry: string; profession?: string; }
 interface TaskItem { id: number; title: string; assignedTo: string; status: 'completed' | 'pending' | 'in-progress'; date: string; }
 interface TripItem { id: number; truck: string; driver: string; destination: string; departureDate: string; returnDate?: string; status: 'travelling' | 'returned'; }
 interface AttendanceLog { id: number; employeeId: number; name: string; date: string; checkIn: string; checkOut?: string; }
@@ -245,8 +245,8 @@ export default function ModernCarriersPage() {
              <>
                <button onClick={() => {
                  const tableData = data?.employees || [];
-                 const headers = ["ID", "Name", "ID Number", "License", "Phone", "ID Expiry", "License Expiry"];
-                 const csvRows = [headers.join(','), ...tableData.map(e => [e.id, `"${e.name}"`, e.idNumber, `"${e.license}"`, e.phone, e.idExpiry, e.licenseExpiry].join(','))].join('\n');
+                 const headers = ["ID", "Name", "Profession", "ID Number", "License", "Phone", "ID Expiry", "License Expiry"];
+                 const csvRows = [headers.join(','), ...tableData.map(e => [e.id, `"${e.name}"`, `"${e.profession || ''}"`, e.idNumber, `"${e.license}"`, e.phone, e.idExpiry, e.licenseExpiry].join(','))].join('\n');
                  const link = document.createElement("a");
                  link.setAttribute("href", encodeURI("data:text/csv;charset=utf-8,\uFEFF" + csvRows));
                  link.setAttribute("download", "employees_report.csv");
@@ -281,12 +281,13 @@ export default function ModernCarriersPage() {
         {data && activeTab === 'employees' && (
           <div className="overflow-x-auto">
             <table className="w-full text-right">
-              <thead><tr className="bg-gray-50 border-b"><th className="p-3">م</th><th className="p-3">اسم الموظف</th><th className="p-3">رقم الهوية</th><th className="p-3">الرخصة</th><th className="p-3">رقم الجوال</th><th className="p-3">تاريخ انتهاء الرخصة</th><th className="p-3">إجراءات</th></tr></thead>
+              <thead><tr className="bg-gray-50 border-b"><th className="p-3">م</th><th className="p-3">اسم الموظف</th><th className="p-3">المهنة</th><th className="p-3">رقم الهوية</th><th className="p-3">الرخصة</th><th className="p-3">رقم الجوال</th><th className="p-3">تاريخ انتهاء الرخصة</th><th className="p-3">الحضور/الانصراف</th><th className="p-3">إجراءات</th></tr></thead>
               <tbody>
                 {data.employees?.map((item, i) => (
                   <tr key={i} className="border-b hover:bg-gray-50">
                     <td className="p-3">{i+1}</td>
                     <td className="p-3 font-bold">{item.name}</td>
+                    <td className="p-3 text-blue-600">{item.profession || '-'}</td>
                     <td className="p-3">{item.idNumber}</td>
                     <td className="p-3 text-xs">{item.license}</td>
                     <td className="p-3" dir="ltr">{item.phone}</td>
@@ -582,6 +583,7 @@ export default function ModernCarriersPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <input className="col-span-2 p-2 border rounded" placeholder="الاسم" value={isEditing ? editingItem?.name : newEmployee.name} onChange={e => isEditing ? setEditingItem({...editingItem!, name: e.target.value}) : setNewEmployee({...newEmployee, name: e.target.value})} />
+              <input className="col-span-2 p-2 border rounded" placeholder="المهنة (مثلاً: سائق، فني...)" value={isEditing ? editingItem?.profession : newEmployee.profession} onChange={e => isEditing ? setEditingItem({...editingItem!, profession: e.target.value}) : setNewEmployee({...newEmployee, profession: e.target.value})} />
               <input className="p-2 border rounded" placeholder="رقم الهوية" value={isEditing ? editingItem?.idNumber : newEmployee.idNumber} onChange={e => isEditing ? setEditingItem({...editingItem!, idNumber: parseInt(e.target.value)}) : setNewEmployee({...newEmployee, idNumber: parseInt(e.target.value)})} />
               <input className="p-2 border rounded" placeholder="الرخصة" value={isEditing ? editingItem?.license : newEmployee.license} onChange={e => isEditing ? setEditingItem({...editingItem!, license: e.target.value}) : setNewEmployee({...newEmployee, license: e.target.value})} />
               <input className="p-2 border rounded" placeholder="رقم الجوال" value={isEditing ? editingItem?.phone : newEmployee.phone} onChange={e => isEditing ? setEditingItem({...editingItem!, phone: e.target.value}) : setNewEmployee({...newEmployee, phone: e.target.value})} />
@@ -606,7 +608,7 @@ export default function ModernCarriersPage() {
       )}
 
       <div className="mt-8 text-center text-[10px] text-gray-400">
-        نسخة v1.2.8 - تفعيل وضع المسؤول لحماية البيانات
+        نسخة v1.2.9 - إضافة حقل المهنة لسجل الموظفين
       </div>
     </div>
   );
