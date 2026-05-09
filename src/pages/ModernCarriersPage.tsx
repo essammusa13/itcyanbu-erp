@@ -275,11 +275,11 @@ export default function ModernCarriersPage() {
       {/* Main Content Area */}
       <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 min-h-[400px]">
         {data && activeTab === 'fleet' && (
-          <div className="overflow-x-auto"><table className="w-full text-right"><thead><tr className="bg-gray-50 border-b"><th className="p-3">م</th><th className="p-3">النوع</th><th className="p-3">اللوحة</th><th className="p-3">الموديل</th><th className="p-3">انتهاء الاستمارة</th></tr></thead><tbody>{data.fleet.map((item, i) => (<tr key={i} className="border-b hover:bg-gray-50"><td className="p-3">{item.id}</td><td className="p-3 font-semibold">{item.type}</td><td className="p-3 font-mono">{item.plate}</td><td className="p-3">{item.model}</td><td className="p-3 text-red-600 font-bold">{item.expiry}</td></tr>))}</tbody></table></div>
+          <div className="overflow-auto max-h-[600px] border rounded-lg"><table className="w-full text-right"><thead><tr className="bg-gray-50 border-b"><th className="p-3">م</th><th className="p-3">النوع</th><th className="p-3">اللوحة</th><th className="p-3">الموديل</th><th className="p-3">انتهاء الاستمارة</th></tr></thead><tbody>{data.fleet.map((item, i) => (<tr key={i} className="border-b hover:bg-gray-50"><td className="p-3">{item.id}</td><td className="p-3 font-semibold">{item.type}</td><td className="p-3 font-mono">{item.plate}</td><td className="p-3">{item.model}</td><td className="p-3 text-red-600 font-bold">{item.expiry}</td></tr>))}</tbody></table></div>
         )}
 
         {data && activeTab === 'employees' && (
-          <div className="overflow-x-auto">
+          <div className="overflow-auto max-h-[600px] border rounded-lg">
             <table className="w-full text-right">
               <thead><tr className="bg-gray-50 border-b"><th className="p-3">م</th><th className="p-3">اسم الموظف</th><th className="p-3">المهنة</th><th className="p-3">رقم الهوية</th><th className="p-3">الرخصة</th><th className="p-3">رقم الجوال</th><th className="p-3">تاريخ انتهاء الرخصة</th><th className="p-3">الحضور/الانصراف</th><th className="p-3">إجراءات</th></tr></thead>
               <tbody>
@@ -352,7 +352,7 @@ export default function ModernCarriersPage() {
         )}
 
         {data && activeTab === 'tasks' && (
-          <div className="overflow-x-auto">
+          <div className="overflow-auto max-h-[600px] border rounded-lg">
             <table className="w-full text-right">
               <thead><tr className="bg-gray-50 border-b"><th className="p-3">م</th><th className="p-3">المهمة</th><th className="p-3">المسؤول</th><th className="p-3">الحالة</th><th className="p-3">إجراءات</th></tr></thead>
               <tbody>
@@ -394,7 +394,7 @@ export default function ModernCarriersPage() {
         )}
 
         {data && activeTab === 'trips' && (
-          <div className="overflow-x-auto">
+          <div className="overflow-auto max-h-[600px] border rounded-lg">
             <table className="w-full text-right">
               <thead><tr className="bg-gray-50 border-b"><th className="p-3">م</th><th className="p-3">الشاحنة</th><th className="p-3">السائق</th><th className="p-3">الوجهة</th><th className="p-3">الذهاب</th><th className="p-3">العودة</th><th className="p-3">الحالة</th><th className="p-3">إجراءات</th></tr></thead>
               <tbody>
@@ -440,7 +440,7 @@ export default function ModernCarriersPage() {
         )}
 
         {data && activeTab === 'attendance' && (
-          <div className="overflow-x-auto">
+          <div className="overflow-auto max-h-[600px] border rounded-lg">
             <table className="w-full text-right">
               <thead><tr className="bg-gray-50 border-b"><th className="p-3">التاريخ</th><th className="p-3">الاسم</th><th className="p-3">الحضور</th><th className="p-3">الانصراف</th><th className="p-3">إجراءات</th></tr></thead>
               <tbody>
@@ -608,7 +608,7 @@ export default function ModernCarriersPage() {
       )}
 
       <div className="mt-8 text-center text-[10px] text-gray-400">
-        نسخة v1.2.9 - إضافة حقل المهنة لسجل الموظفين
+        نسخة v1.3.0 - إضافة خاصية التمرير الرأسي للجداول
       </div>
     </div>
   );
