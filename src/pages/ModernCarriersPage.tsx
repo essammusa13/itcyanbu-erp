@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Truck, Navigation, FileText, Users, ExternalLink, Loader2, Lock, ClipboardList, Plus, Pencil, Trash2, Save, X } from 'lucide-react';
+import { Truck, Navigation, FileText, Users, ExternalLink, Loader2, Lock, ClipboardList, Plus, Pencil, Trash2, Save, X, Download, BarChart2, Clock, DollarSign } from 'lucide-react';
 
 interface FleetItem { id: number; type: string; plate: string; model: number; expiry: string; }
 interface CustodyItem { id: number; driverName: string; idNumber: number; type: string; status: string; }
@@ -141,18 +141,63 @@ export default function ModernCarriersPage() {
         >
           <ClipboardList size={18} /> نموذج بيانات ومتابعة الموظفين
         </button>
+        <button 
+          onClick={() => setActiveTab('reports')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-t-lg transition ${activeTab === 'reports' ? 'bg-white text-blue-600 border-b-2 border-blue-600 font-bold' : 'text-gray-600 hover:bg-gray-200'}`}
+        >
+          <BarChart2 size={18} /> التقارير والتحليلات
+        </button>
       </div>
+
+      {/* Export Utility Function */}
+      {(() => {
+        const exportToCSV = (tableData: any[], fileName: string) => {
+          if (!tableData || tableData.length === 0) return;
+          const headers = Object.keys(tableData[0]).join(',');
+          const rows = tableData.map(obj => Object.values(obj).join(',')).join('\n');
+          const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + headers + '\n' + rows;
+          const encodedUri = encodeURI(csvContent);
+          const link = document.createElement("a");
+          link.setAttribute("href", encodedUri);
+          link.setAttribute("download", `${fileName}.csv`);
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        };
+
+        return null;
+      })()}
 
       {/* Action Bar for Employees */}
       {activeTab === 'employees' && (
         <div className="mb-4 flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
           <h3 className="text-lg font-bold text-gray-800">إدارة سجل الموظفين</h3>
-          <button 
-            onClick={() => setShowAddForm(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
-          >
-            <Plus size={18} /> إضافة موظف جديد
-          </button>
+          <div className="flex gap-2">
+            <button 
+              onClick={() => {
+                const tableData = data?.employees || [];
+                const headers = ["ID", "Name", "ID Number", "License", "Phone", "ID Expiry", "License Expiry"];
+                const csvRows = [
+                  headers.join(','),
+                  ...tableData.map(e => [e.id, `"${e.name}"`, e.idNumber, `"${e.license}"`, e.phone, e.idExpiry, e.licenseExpiry].join(','))
+                ].join('\n');
+                const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + csvRows;
+                const link = document.createElement("a");
+                link.setAttribute("href", encodeURI(csvContent));
+                link.setAttribute("download", "employees_report.csv");
+                link.click();
+              }}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition"
+            >
+              <Download size={18} /> تصدير CSV
+            </button>
+            <button 
+              onClick={() => setShowAddForm(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+            >
+              <Plus size={18} /> إضافة موظف جديد
+            </button>
+          </div>
         </div>
       )}
 
@@ -327,6 +372,93 @@ export default function ModernCarriersPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {data && activeTab === 'reports' && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-blue-50 p-6 rounded-xl border border-blue-100">
+                <div className="flex items-center gap-3 text-blue-600 mb-2">
+                  <Truck size={24} />
+                  <span className="font-bold">إجمالي الأسطول</span>
+                </div>
+                <div className="text-3xl font-black text-blue-900">{data.fleet.length} مركبة</div>
+                <div className="text-sm text-blue-600 mt-1">منها 11 شاحنة و 13 مقطورة</div>
+              </div>
+              
+              <div className="bg-green-50 p-6 rounded-xl border border-green-100">
+                <div className="flex items-center gap-3 text-green-600 mb-2">
+                  <Users size={24} />
+                  <span className="font-bold">القوة العاملة</span>
+                </div>
+                <div className="text-3xl font-black text-green-900">{data.employees?.length || 0} موظف</div>
+                <div className="text-sm text-green-600 mt-1">سائقين وفنيين وإداريين</div>
+              </div>
+
+              <div className="bg-purple-50 p-6 rounded-xl border border-purple-100">
+                <div className="flex items-center gap-3 text-purple-600 mb-2">
+                  <DollarSign size={24} />
+                  <span className="font-bold">تحليل التكاليف</span>
+                </div>
+                <div className="text-3xl font-black text-purple-900">متاح قريباً</div>
+                <div className="text-sm text-purple-600 mt-1">تتبع الصيانة والوقود</div>
+              </div>
+            </div>
+
+            <div className="bg-gray-50 p-8 rounded-xl border border-dashed border-gray-300 text-center">
+              <BarChart2 className="mx-auto text-gray-400 mb-4" size={48} />
+              <h4 className="text-lg font-bold text-gray-700">الرسوم البيانية التفاعلية</h4>
+              <p className="text-gray-500 max-w-md mx-auto mt-2">
+                سيتم هنا عرض رسوم بيانية توضح معدلات الأعطال (Downtime) وتكاليف التشغيل الشهرية بناءً على البيانات المسجلة.
+              </p>
+              <button className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                توليد تقرير الأداء الشهري
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-6">
+               <div className="border rounded-xl p-4">
+                  <h4 className="font-bold mb-4 flex items-center gap-2">
+                    <Clock size={18} className="text-orange-500" />
+                    حالة التشغيل (Real-time Status)
+                  </h4>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center text-sm">
+                      <span>الشاحنات النشطة</span>
+                      <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold text-[10px]">85%</span>
+                    </div>
+                    <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                      <div className="bg-green-500 h-full w-[85%]"></div>
+                    </div>
+                    <div className="flex justify-between items-center text-sm">
+                      <span>معدل التوقف (Downtime)</span>
+                      <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-bold text-[10px]">15%</span>
+                    </div>
+                    <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                      <div className="bg-red-500 h-full w-[15%]"></div>
+                    </div>
+                  </div>
+               </div>
+               
+               <div className="border rounded-xl p-4">
+                  <h4 className="font-bold mb-4">قوالب التقارير المتاحة</h4>
+                  <div className="grid grid-cols-1 gap-2">
+                    <button className="text-right p-2 hover:bg-gray-50 rounded text-sm border flex items-center justify-between">
+                      <span>تقرير الصيانة الأسبوعي</span>
+                      <FileText size={16} className="text-gray-400" />
+                    </button>
+                    <button className="text-right p-2 hover:bg-gray-50 rounded text-sm border flex items-center justify-between">
+                      <span>كشف رواتب السائقين الشهري</span>
+                      <FileText size={16} className="text-gray-400" />
+                    </button>
+                    <button className="text-right p-2 hover:bg-gray-50 rounded text-sm border flex items-center justify-between">
+                      <span>سجل استهلاك الوقود</span>
+                      <FileText size={16} className="text-gray-400" />
+                    </button>
+                  </div>
+               </div>
+            </div>
           </div>
         )}
       </div>
