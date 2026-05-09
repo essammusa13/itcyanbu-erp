@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Truck, Navigation, FileText, Users, ExternalLink, Loader2 } from 'lucide-react';
+import { Truck, Navigation, FileText, Users, ExternalLink, Loader2, Lock } from 'lucide-react';
 
 interface FleetItem { id: number; type: string; plate: string; model: number; expiry: string; }
 interface CustodyItem { id: number; driverName: string; idNumber: number; type: string; status: string; }
@@ -7,6 +7,10 @@ interface DeviceItem { id: number; type: string; truck: string; serial?: string;
 interface DriverItem { id: number; name: string; plate: string; licenseExpiry: string; phone: number; }
 
 export default function ModernCarriersPage() {
+  const [isAuthenticated, setIsAuthenticated] = useState(() => sessionStorage.getItem('modern_carriers_auth') === 'true');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  
   const [data, setData] = useState<{
     fleet: FleetItem[];
     custody: CustodyItem[];
@@ -34,6 +38,44 @@ export default function ModernCarriersPage() {
     return (
       <div className="h-full w-full flex items-center justify-center">
         <Loader2 className="animate-spin text-ghl-blue" size={40} />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="h-full w-full flex items-center justify-center bg-gray-50 p-4" dir="rtl">
+        <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 max-w-md w-full text-center">
+          <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-600">
+            <Lock size={32} />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">القسم محمي بكلمة مرور</h2>
+          <p className="text-gray-500 mb-6">الرجاء إدخال كلمة المرور للوصول إلى بيانات مؤسسة نواقل</p>
+          
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            if (password === 'nwagl2026') {
+              sessionStorage.setItem('modern_carriers_auth', 'true');
+              setIsAuthenticated(true);
+              setError('');
+            } else {
+              setError('كلمة المرور غير صحيحة');
+            }
+          }}>
+            <input 
+              type="password" 
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="كلمة المرور..."
+              className="w-full px-4 py-3 border border-gray-200 rounded-lg mb-4 text-left focus:outline-none focus:ring-2 focus:ring-blue-500"
+              dir="ltr"
+            />
+            {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+            <button type="submit" className="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition">
+              دخول
+            </button>
+          </form>
+        </div>
       </div>
     );
   }
