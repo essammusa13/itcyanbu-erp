@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Truck, Navigation, FileText, Users, ExternalLink, Loader2, Lock, ClipboardList, Plus, Pencil, Trash2, X, Download, BarChart2, CheckCircle2, Circle, ListTodo, Map, ArrowRightLeft, Clock } from 'lucide-react';
+import { Truck, Navigation, FileText, Users, ExternalLink, Loader2, Lock, Unlock, ClipboardList, Plus, Pencil, Trash2, X, Download, BarChart2, CheckCircle2, Circle, ListTodo, Map, ArrowRightLeft, Clock } from 'lucide-react';
 
 interface FleetItem { id: number; type: string; plate: string; model: number; expiry: string; }
 interface CustodyItem { id: number; driverName: string; idNumber: number; type: string; status: string; }
@@ -12,6 +12,7 @@ interface AttendanceLog { id: number; employeeId: number; name: string; date: st
 
 export default function ModernCarriersPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => sessionStorage.getItem('modern_carriers_auth') === 'true');
+  const [isAdminMode, setIsAdminMode] = useState(false);
   const [password, setPassword] = useState('');
   const [activeTab, setActiveTab] = useState('fleet');
   const [data, setData] = useState<{
@@ -124,15 +125,35 @@ export default function ModernCarriersPage() {
           <h1 className="text-3xl font-black text-gray-900 mb-1">بيانات مؤسسة نواقل</h1>
           <p className="text-gray-500">سجل جرد أسطول الشاحنات والمعدات والبيانات</p>
         </div>
-        <a 
-          href="https://modern-carriers.lovable.app/" 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-200"
-        >
-          <span>فتح تطبيق Modern Carriers</span>
-          <ExternalLink size={18} />
-        </a>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => {
+              if (!isAdminMode) {
+                const pin = prompt('يرجى إدخال رمز المسؤول لتفعيل التعديل:');
+                if (pin === '1234') { // Default admin PIN
+                  setIsAdminMode(true);
+                } else {
+                  alert('الرمز خاطئ');
+                }
+              } else {
+                setIsAdminMode(false);
+              }
+            }}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold transition shadow-sm ${isAdminMode ? 'bg-orange-100 text-orange-700 border border-orange-200' : 'bg-gray-100 text-gray-600 border border-gray-200'}`}
+          >
+            {isAdminMode ? <Unlock size={18} /> : <Lock size={18} />}
+            <span>{isAdminMode ? 'وضع المسؤول نشط' : 'تفعيل وضع المسؤول'}</span>
+          </button>
+          <a 
+            href="https://modern-carriers.lovable.app/" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-200"
+          >
+            <span>فتح تطبيق Modern Carriers</span>
+            <ExternalLink size={18} />
+          </a>
+        </div>
       </div>
 
       {/* Tabs Menu */}
@@ -220,7 +241,7 @@ export default function ModernCarriersPage() {
                 <Download size={18} /> تصدير السجل
               </button>
            )}
-           {activeTab === 'employees' && (
+           {activeTab === 'employees' && isAdminMode && (
              <>
                <button onClick={() => {
                  const tableData = data?.employees || [];
@@ -238,12 +259,12 @@ export default function ModernCarriersPage() {
                </button>
              </>
            )}
-           {activeTab === 'tasks' && (
+           {activeTab === 'tasks' && isAdminMode && (
              <button onClick={() => setShowTaskForm(true)} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
                <Plus size={18} /> إضافة مهمة
              </button>
            )}
-           {activeTab === 'trips' && (
+           {activeTab === 'trips' && isAdminMode && (
              <button onClick={() => setShowTripForm(true)} className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition">
                <Map size={18} /> تسجيل رحلة
              </button>
@@ -271,50 +292,56 @@ export default function ModernCarriersPage() {
                     <td className="p-3" dir="ltr">{item.phone}</td>
                     <td className="p-3">{item.licenseExpiry}</td>
                     <td className="p-3">
-                      <div className="flex gap-1">
-                        <button 
-                          onClick={() => {
-                            const now = new Date().toLocaleTimeString('sv-SE').slice(0, 5);
-                            const today = new Date().toLocaleDateString('sv-SE');
-                            const log = { id: Date.now(), employeeId: item.id, name: item.name, date: today, checkIn: now };
-                            const updated = [...(data?.attendance || []), log];
-                            setData({...data!, attendance: updated});
-                            localStorage.setItem('modern_carriers_attendance', JSON.stringify(updated));
-                            alert(`تم تسجيل حضور ${item.name} الساعة ${now}`);
-                          }}
-                          className="px-2 py-1 bg-green-50 text-green-700 rounded text-[10px] font-bold hover:bg-green-100"
-                        >حضور</button>
-                        <button 
-                          onClick={() => {
-                            const now = new Date().toLocaleTimeString('sv-SE').slice(0, 5);
-                            const today = new Date().toLocaleDateString('sv-SE');
-                            // Find the last check-in for this employee today
-                            const lastIdx = (data?.attendance || []).reduce((acc: number, curr: AttendanceLog, idx: number) => 
-                              (curr.employeeId === item.id && curr.date === today) ? idx : acc, -1);
-                            
-                            if (lastIdx !== -1) {
-                              const updated = [...data!.attendance];
-                              updated[lastIdx] = { ...updated[lastIdx], checkOut: now };
+                      {isAdminMode && (
+                        <div className="flex gap-1">
+                          <button 
+                            onClick={() => {
+                              const now = new Date().toLocaleTimeString('sv-SE').slice(0, 5);
+                              const today = new Date().toLocaleDateString('sv-SE');
+                              const log = { id: Date.now(), employeeId: item.id, name: item.name, date: today, checkIn: now };
+                              const updated = [...(data?.attendance || []), log];
                               setData({...data!, attendance: updated});
                               localStorage.setItem('modern_carriers_attendance', JSON.stringify(updated));
-                              alert(`تم تسجيل انصراف ${item.name} الساعة ${now}`);
-                            } else {
-                              alert('يجب تسجيل الحضور أولاً اليوم');
-                            }
-                          }}
-                          className="px-2 py-1 bg-red-50 text-red-700 rounded text-[10px] font-bold hover:bg-red-100"
-                        >انصراف</button>
-                      </div>
+                              alert(`تم تسجيل حضور ${item.name} الساعة ${now}`);
+                            }}
+                            className="px-2 py-1 bg-green-50 text-green-700 rounded text-[10px] font-bold hover:bg-green-100"
+                          >حضور</button>
+                          <button 
+                            onClick={() => {
+                              const now = new Date().toLocaleTimeString('sv-SE').slice(0, 5);
+                              const today = new Date().toLocaleDateString('sv-SE');
+                              // Find the last check-in for this employee today
+                              const lastIdx = (data?.attendance || []).reduce((acc: number, curr: AttendanceLog, idx: number) => 
+                                (curr.employeeId === item.id && curr.date === today) ? idx : acc, -1);
+                              
+                              if (lastIdx !== -1) {
+                                const updated = [...data!.attendance];
+                                updated[lastIdx] = { ...updated[lastIdx], checkOut: now };
+                                setData({...data!, attendance: updated});
+                                localStorage.setItem('modern_carriers_attendance', JSON.stringify(updated));
+                                alert(`تم تسجيل انصراف ${item.name} الساعة ${now}`);
+                              } else {
+                                alert('يجب تسجيل الحضور أولاً اليوم');
+                              }
+                            }}
+                            className="px-2 py-1 bg-red-50 text-red-700 rounded text-[10px] font-bold hover:bg-red-100"
+                          >انصراف</button>
+                        </div>
+                      )}
                     </td>
                     <td className="p-3 flex gap-2">
-                      <button onClick={() => { setEditingItem(item); setIsEditing(true); }} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded"><Pencil size={16} /></button>
-                      <button onClick={() => {
-                        if (confirm('حذف الموظف؟')) {
-                          const updated = data.employees.filter(e => e.id !== item.id);
-                          setData({ ...data, employees: updated });
-                          localStorage.setItem('modern_carriers_employees', JSON.stringify(updated));
-                        }
-                      }} className="p-1.5 text-red-600 hover:bg-red-50 rounded"><Trash2 size={16} /></button>
+                      {isAdminMode && (
+                        <>
+                          <button onClick={() => { setEditingItem(item); setIsEditing(true); }} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded"><Pencil size={16} /></button>
+                          <button onClick={() => {
+                            if (confirm('حذف الموظف؟')) {
+                              const updated = data.employees.filter(e => e.id !== item.id);
+                              setData({ ...data, employees: updated });
+                              localStorage.setItem('modern_carriers_employees', JSON.stringify(updated));
+                            }
+                          }} className="p-1.5 text-red-600 hover:bg-red-50 rounded"><Trash2 size={16} /></button>
+                        </>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -339,20 +366,24 @@ export default function ModernCarriersPage() {
                       </span>
                     </td>
                     <td className="p-3 flex gap-2">
-                      <button onClick={() => {
-                        const updated = data.tasks.map(t => t.id === item.id ? { ...t, status: t.status === 'completed' ? 'pending' : 'completed' } as TaskItem : t);
-                        setData({ ...data, tasks: updated });
-                        localStorage.setItem('modern_carriers_tasks', JSON.stringify(updated));
-                      }} className="p-1.5 text-green-600 hover:bg-green-50 rounded">
-                        {item.status === 'completed' ? <Circle size={16} /> : <CheckCircle2 size={16} />}
-                      </button>
-                      <button onClick={() => {
-                        if (confirm('حذف المهمة؟')) {
-                          const updated = data.tasks.filter(t => t.id !== item.id);
-                          setData({ ...data, tasks: updated });
-                          localStorage.setItem('modern_carriers_tasks', JSON.stringify(updated));
-                        }
-                      }} className="p-1.5 text-red-600 hover:bg-red-50 rounded"><Trash2 size={16} /></button>
+                      {isAdminMode && (
+                        <>
+                          <button onClick={() => {
+                            const updated = data.tasks.map(t => t.id === item.id ? { ...t, status: t.status === 'completed' ? 'pending' : 'completed' } as TaskItem : t);
+                            setData({ ...data, tasks: updated });
+                            localStorage.setItem('modern_carriers_tasks', JSON.stringify(updated));
+                          }} className="p-1.5 text-green-600 hover:bg-green-50 rounded">
+                            {item.status === 'completed' ? <Circle size={16} /> : <CheckCircle2 size={16} />}
+                          </button>
+                          <button onClick={() => {
+                            if (confirm('حذف المهمة؟')) {
+                              const updated = data.tasks.filter(t => t.id !== item.id);
+                              setData({ ...data, tasks: updated });
+                              localStorage.setItem('modern_carriers_tasks', JSON.stringify(updated));
+                            }
+                          }} className="p-1.5 text-red-600 hover:bg-red-50 rounded"><Trash2 size={16} /></button>
+                        </>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -380,21 +411,25 @@ export default function ModernCarriersPage() {
                       </span>
                     </td>
                     <td className="p-3 flex gap-2">
-                      {item.status === 'travelling' && (
-                        <button onClick={() => {
-                          const now = new Date().toLocaleString('sv-SE').slice(0, 16).replace('T', ' ');
-                          const updated = data.trips.map(t => t.id === item.id ? { ...t, status: 'returned', returnDate: now } as TripItem : t);
-                          setData({ ...data, trips: updated });
-                          localStorage.setItem('modern_carriers_trips', JSON.stringify(updated));
-                        }} className="p-1.5 text-green-600 hover:bg-green-50 rounded"><CheckCircle2 size={16} /></button>
+                      {isAdminMode && (
+                        <>
+                          {item.status === 'travelling' && (
+                            <button onClick={() => {
+                              const now = new Date().toLocaleString('sv-SE').slice(0, 16).replace('T', ' ');
+                              const updated = data.trips.map(t => t.id === item.id ? { ...t, status: 'returned', returnDate: now } as TripItem : t);
+                              setData({ ...data, trips: updated });
+                              localStorage.setItem('modern_carriers_trips', JSON.stringify(updated));
+                            }} className="p-1.5 text-green-600 hover:bg-green-50 rounded"><CheckCircle2 size={16} /></button>
+                          )}
+                          <button onClick={() => {
+                            if (confirm('حذف الرحلة؟')) {
+                              const updated = data.trips.filter(t => t.id !== item.id);
+                              setData({ ...data, trips: updated });
+                              localStorage.setItem('modern_carriers_trips', JSON.stringify(updated));
+                            }
+                          }} className="p-1.5 text-red-600 hover:bg-red-50 rounded"><Trash2 size={16} /></button>
+                        </>
                       )}
-                      <button onClick={() => {
-                        if (confirm('حذف الرحلة؟')) {
-                          const updated = data.trips.filter(t => t.id !== item.id);
-                          setData({ ...data, trips: updated });
-                          localStorage.setItem('modern_carriers_trips', JSON.stringify(updated));
-                        }
-                      }} className="p-1.5 text-red-600 hover:bg-red-50 rounded"><Trash2 size={16} /></button>
                     </td>
                   </tr>
                 ))}
@@ -415,13 +450,15 @@ export default function ModernCarriersPage() {
                     <td className="p-3 text-green-600 font-bold">{item.checkIn}</td>
                     <td className="p-3 text-red-600 font-bold">{item.checkOut || '-'}</td>
                     <td className="p-3">
-                      <button onClick={() => {
-                        if (confirm('حذف هذا السجل؟')) {
-                          const updated = data.attendance.filter(a => a.id !== item.id);
-                          setData({ ...data, attendance: updated });
-                          localStorage.setItem('modern_carriers_attendance', JSON.stringify(updated));
-                        }
-                      }} className="text-red-600 p-1 hover:bg-red-50 rounded"><Trash2 size={16} /></button>
+                      {isAdminMode && (
+                        <button onClick={() => {
+                          if (confirm('حذف هذا السجل؟')) {
+                            const updated = data.attendance.filter(a => a.id !== item.id);
+                            setData({ ...data, attendance: updated });
+                            localStorage.setItem('modern_carriers_attendance', JSON.stringify(updated));
+                          }
+                        }} className="text-red-600 p-1 hover:bg-red-50 rounded"><Trash2 size={16} /></button>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -569,7 +606,7 @@ export default function ModernCarriersPage() {
       )}
 
       <div className="mt-8 text-center text-[10px] text-gray-400">
-        نسخة v1.2.7 - تحديث سجل الحضور والانصراف
+        نسخة v1.2.8 - تفعيل وضع المسؤول لحماية البيانات
       </div>
     </div>
   );
