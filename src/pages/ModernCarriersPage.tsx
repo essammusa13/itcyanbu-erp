@@ -556,6 +556,10 @@ export default function ModernCarriersPage() {
         )}
       </div>
 
+      <div className="mt-8 pt-4 border-t border-gray-200 text-center text-[10px] text-gray-400">
+        نسخة النظام v1.2.5 - تحديث المهام والتقارير - 09/05/2026
+      </div>
+
       {/* Tasks Modal */}
       {showTaskForm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" dir="rtl">
