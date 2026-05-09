@@ -118,7 +118,7 @@ export default function ModernCarriersPage() {
   if (loading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin text-blue-600" size={40} /></div>;
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto animate-in fade-in duration-500" dir="rtl">
+    <div className="p-4 md:p-8 max-w-7xl mx-auto animate-in fade-in duration-500 overflow-y-auto h-full pb-20" dir="rtl">
       {/* Header Area */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
