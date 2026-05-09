@@ -25,6 +25,7 @@ import {
     Mail,
     MessageCircle,
     Info,
+    Truck,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useTranslation } from 'react-i18next';
@@ -61,7 +62,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeModule = 'Contacts', onModuleCh
         { icon: LineChart, label: 'Agency Analytics', id: 'Agency Analytics', tKey: 'sidebar.agency_analytics' },
         { icon: Image, label: 'Media Library', id: 'Media Library', tKey: 'sidebar.media_library' },
         { icon: Facebook, label: 'Facebook Group', id: 'Facebook Group', tKey: 'sidebar.facebook_group' },
-        { icon: Brain, label: 'AI Solutions', id: 'AI Solutions', tKey: 'sidebar.ai_solutions' }
+        { icon: Brain, label: 'AI Solutions', id: 'AI Solutions', tKey: 'sidebar.ai_solutions' },
+        { icon: Truck, label: 'Modern Carriers', id: 'Modern Carriers', tKey: 'Modern Carriers', url: 'https://modern-carriers.lovable.app/' }
     ];
 
     const toggleLanguage = () => {
@@ -104,6 +106,10 @@ const Sidebar: React.FC<SidebarProps> = ({ activeModule = 'Contacts', onModuleCh
                         <button
                             key={item.id}
                             onClick={() => {
+                                if ('url' in item && item.url) {
+                                    window.open(item.url, '_blank');
+                                    return;
+                                }
                                 console.log('Sidebar: clicking module', item.id);
                                 onModuleChange?.(item.id);
                             }}
