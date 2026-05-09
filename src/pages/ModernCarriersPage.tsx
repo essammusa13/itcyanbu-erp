@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Truck, Navigation, FileText, Users, ExternalLink, Loader2, Lock, ClipboardList } from 'lucide-react';
+import { Truck, Navigation, FileText, Users, ExternalLink, Loader2, Lock, ClipboardList, Plus, Pencil, Trash2, Save, X } from 'lucide-react';
 
 interface FleetItem { id: number; type: string; plate: string; model: number; expiry: string; }
 interface CustodyItem { id: number; driverName: string; idNumber: number; type: string; status: string; }
@@ -22,11 +22,20 @@ export default function ModernCarriersPage() {
   
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('fleet');
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingItem, setEditingItem] = useState<EmployeeItem | null>(null);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newEmployee, setNewEmployee] = useState<Partial<EmployeeItem>>({});
 
   useEffect(() => {
     fetch('/data/nwagl.json')
       .then(res => res.json())
       .then(json => {
+        // Load from localStorage if available, otherwise use json
+        const savedEmployees = localStorage.getItem('modern_carriers_employees');
+        if (savedEmployees) {
+          json.employees = JSON.parse(savedEmployees);
+        }
         setData(json);
         setLoading(false);
       })
@@ -133,6 +142,19 @@ export default function ModernCarriersPage() {
           <ClipboardList size={18} /> نموذج بيانات ومتابعة الموظفين
         </button>
       </div>
+
+      {/* Action Bar for Employees */}
+      {activeTab === 'employees' && (
+        <div className="mb-4 flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+          <h3 className="text-lg font-bold text-gray-800">إدارة سجل الموظفين</h3>
+          <button 
+            onClick={() => setShowAddForm(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+          >
+            <Plus size={18} /> إضافة موظف جديد
+          </button>
+        </div>
+      )}
 
       {/* Content */}
       <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
@@ -262,6 +284,7 @@ export default function ModernCarriersPage() {
                   <th className="p-3">رقم الجوال</th>
                   <th className="p-3">انتهاء الهوية</th>
                   <th className="p-3">تاريخ انتهاء الرخصة</th>
+                  <th className="p-3">إجراءات</th>
                 </tr>
               </thead>
               <tbody>
@@ -274,6 +297,32 @@ export default function ModernCarriersPage() {
                     <td className="p-3 text-blue-600" dir="ltr" style={{ textAlign: 'right' }}>{item.phone || '-'}</td>
                     <td className="p-3 text-gray-600">{item.idExpiry || '-'}</td>
                     <td className="p-3 text-gray-600">{item.licenseExpiry || '-'}</td>
+                    <td className="p-3 flex gap-2">
+                      <button 
+                        onClick={() => {
+                          setEditingItem(item);
+                          setIsEditing(true);
+                        }}
+                        className="p-1.5 text-blue-600 hover:bg-blue-50 rounded"
+                        title="تعديل"
+                      >
+                        <Pencil size={16} />
+                      </button>
+                      <button 
+                        onClick={() => {
+                          if (confirm('هل أنت متأكد من حذف هذا الموظف؟')) {
+                            const updated = data.employees.filter(e => e.id !== item.id);
+                            const newData = { ...data, employees: updated };
+                            setData(newData);
+                            localStorage.setItem('modern_carriers_employees', JSON.stringify(updated));
+                          }
+                        }}
+                        className="p-1.5 text-red-600 hover:bg-red-50 rounded"
+                        title="حذف"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -281,6 +330,108 @@ export default function ModernCarriersPage() {
           </div>
         )}
       </div>
+
+      {/* Add/Edit Modal */}
+      {(showAddForm || isEditing) && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" dir="rtl">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden">
+            <div className="p-6 border-b flex justify-between items-center bg-gray-50">
+              <h3 className="text-xl font-bold text-gray-900">
+                {isEditing ? 'تعديل بيانات موظف' : 'إضافة موظف جديد'}
+              </h3>
+              <button onClick={() => { setShowAddForm(false); setIsEditing(false); setEditingItem(null); }} className="text-gray-400 hover:text-gray-600">
+                <X size={24} />
+              </button>
+            </div>
+            <div className="p-6 grid grid-cols-2 gap-4">
+              <div className="col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">اسم الموظف</label>
+                <input 
+                  type="text" 
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  value={isEditing ? editingItem?.name : newEmployee.name}
+                  onChange={(e) => isEditing ? setEditingItem({...editingItem!, name: e.target.value}) : setNewEmployee({...newEmployee, name: e.target.value})}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">رقم الهوية</label>
+                <input 
+                  type="text" 
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  value={isEditing ? editingItem?.idNumber : newEmployee.idNumber}
+                  onChange={(e) => isEditing ? setEditingItem({...editingItem!, idNumber: parseInt(e.target.value)}) : setNewEmployee({...newEmployee, idNumber: parseInt(e.target.value)})}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">الرخصة</label>
+                <input 
+                  type="text" 
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  value={isEditing ? editingItem?.license : newEmployee.license}
+                  onChange={(e) => isEditing ? setEditingItem({...editingItem!, license: e.target.value}) : setNewEmployee({...newEmployee, license: e.target.value})}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">رقم الجوال</label>
+                <input 
+                  type="text" 
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  value={isEditing ? editingItem?.phone : newEmployee.phone}
+                  onChange={(e) => isEditing ? setEditingItem({...editingItem!, phone: e.target.value}) : setNewEmployee({...newEmployee, phone: e.target.value})}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">انتهاء الهوية</label>
+                <input 
+                  type="text" 
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  value={isEditing ? editingItem?.idExpiry : newEmployee.idExpiry}
+                  onChange={(e) => isEditing ? setEditingItem({...editingItem!, idExpiry: e.target.value}) : setNewEmployee({...newEmployee, idExpiry: e.target.value})}
+                />
+              </div>
+              <div className="col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">تاريخ انتهاء الرخصة</label>
+                <input 
+                  type="text" 
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  value={isEditing ? editingItem?.licenseExpiry : newEmployee.licenseExpiry}
+                  onChange={(e) => isEditing ? setEditingItem({...editingItem!, licenseExpiry: e.target.value}) : setNewEmployee({...newEmployee, licenseExpiry: e.target.value})}
+                />
+              </div>
+            </div>
+            <div className="p-6 bg-gray-50 border-t flex gap-3">
+              <button 
+                onClick={() => {
+                  if (isEditing && editingItem) {
+                    const updated = data?.employees.map(e => e.id === editingItem.id ? editingItem : e) || [];
+                    setData({...data!, employees: updated});
+                    localStorage.setItem('modern_carriers_employees', JSON.stringify(updated));
+                    setIsEditing(false);
+                    setEditingItem(null);
+                  } else {
+                    const id = (data?.employees.length || 0) + 1;
+                    const item = { ...newEmployee, id } as EmployeeItem;
+                    const updated = [...(data?.employees || []), item];
+                    setData({...data!, employees: updated});
+                    localStorage.setItem('modern_carriers_employees', JSON.stringify(updated));
+                    setShowAddForm(false);
+                    setNewEmployee({});
+                  }
+                }}
+                className="flex-1 bg-blue-600 text-white font-bold py-2 rounded-lg hover:bg-blue-700 transition flex items-center justify-center gap-2"
+              >
+                <Save size={18} /> حفظ البيانات
+              </button>
+              <button 
+                onClick={() => { setShowAddForm(false); setIsEditing(false); setEditingItem(null); }}
+                className="flex-1 bg-white border border-gray-200 text-gray-600 font-bold py-2 rounded-lg hover:bg-gray-50 transition"
+              >
+                إلغاء
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
