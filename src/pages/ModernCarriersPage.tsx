@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Truck, Navigation, FileText, Users, ExternalLink, Loader2, Lock, ClipboardList, Plus, Pencil, Trash2, Save, X, Download, BarChart2, Clock, DollarSign, CheckCircle2, Circle, ListTodo } from 'lucide-react';
+import { Truck, Navigation, FileText, Users, ExternalLink, Loader2, Lock, ClipboardList, Plus, Pencil, Trash2, Save, X, Download, BarChart2, Clock, CheckCircle2, Circle, ListTodo } from 'lucide-react';
 
 interface FleetItem { id: number; type: string; plate: string; model: number; expiry: string; }
 interface CustodyItem { id: number; driverName: string; idNumber: number; type: string; status: string; }
@@ -168,25 +168,6 @@ export default function ModernCarriersPage() {
           <BarChart2 size={18} /> التقارير والتحليلات
         </button>
       </div>
-
-      {/* Export Utility Function */}
-      {(() => {
-        const exportToCSV = (tableData: any[], fileName: string) => {
-          if (!tableData || tableData.length === 0) return;
-          const headers = Object.keys(tableData[0]).join(',');
-          const rows = tableData.map(obj => Object.values(obj).join(',')).join('\n');
-          const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + headers + '\n' + rows;
-          const encodedUri = encodeURI(csvContent);
-          const link = document.createElement("a");
-          link.setAttribute("href", encodedUri);
-          link.setAttribute("download", `${fileName}.csv`);
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-        };
-
-        return null;
-      })()}
 
       {/* Action Bar for Employees */}
       {activeTab === 'employees' && (
