@@ -54,7 +54,7 @@ export default function ModernCarriersPage() {
           
           <form onSubmit={(e) => {
             e.preventDefault();
-            if (password === 'nwagl2026') {
+            if (password === 'Itcyanbu123@') {
               sessionStorage.setItem('modern_carriers_auth', 'true');
               setIsAuthenticated(true);
               setError('');
