@@ -8,6 +8,7 @@ interface DriverItem { id: number; name: string; plate: string; licenseExpiry: s
 interface EmployeeItem { id: number; name: string; idNumber: number; license: string; phone: string; idExpiry: string; licenseExpiry: string; }
 interface TaskItem { id: number; title: string; assignedTo: string; status: 'completed' | 'pending' | 'in-progress'; date: string; }
 interface TripItem { id: number; truck: string; driver: string; destination: string; departureDate: string; returnDate?: string; status: 'travelling' | 'returned'; }
+interface AttendanceLog { id: number; employeeId: number; name: string; date: string; checkIn: string; checkOut?: string; }
 
 export default function ModernCarriersPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => sessionStorage.getItem('modern_carriers_auth') === 'true');
@@ -21,6 +22,7 @@ export default function ModernCarriersPage() {
     employees: EmployeeItem[];
     tasks: TaskItem[];
     trips: TripItem[];
+    attendance: AttendanceLog[];
   } | null>(null);
   
   const [loading, setLoading] = useState(true);
@@ -60,6 +62,13 @@ export default function ModernCarriersPage() {
             { id: 1, truck: '9849 أ ر ح', driver: 'رامشاندرا', destination: 'الرياض', departureDate: '2026-05-09 08:00', status: 'travelling' },
             { id: 2, truck: '9095 أ أ ر', driver: 'أحمد الفكي', destination: 'جدة', departureDate: '2026-05-08 10:00', returnDate: '2026-05-09 14:00', status: 'returned' }
           ];
+        }
+
+        const savedAttendance = localStorage.getItem('modern_carriers_attendance');
+        if (savedAttendance) {
+          json.attendance = JSON.parse(savedAttendance);
+        } else if (!json.attendance) {
+          json.attendance = [];
         }
         
         setData(json);
@@ -171,6 +180,12 @@ export default function ModernCarriersPage() {
           <ArrowRightLeft size={18} /> حركة الأسطول
         </button>
         <button 
+          onClick={() => setActiveTab('attendance')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-t-lg transition whitespace-nowrap ${activeTab === 'attendance' ? 'bg-white text-blue-600 border-b-2 border-blue-600 font-bold' : 'text-gray-600 hover:bg-gray-200'}`}
+        >
+          <Clock size={18} /> سجل الحضور
+        </button>
+        <button 
           onClick={() => setActiveTab('reports')}
           className={`flex items-center gap-2 px-4 py-2 rounded-t-lg transition whitespace-nowrap ${activeTab === 'reports' ? 'bg-white text-blue-600 border-b-2 border-blue-600 font-bold' : 'text-gray-600 hover:bg-gray-200'}`}
         >
@@ -188,9 +203,23 @@ export default function ModernCarriersPage() {
           {activeTab === 'employees' && 'إدارة سجل الموظفين'}
           {activeTab === 'tasks' && 'سجل المهام اليومية'}
           {activeTab === 'trips' && 'سجل حركة الذهاب والعودة'}
+          {activeTab === 'attendance' && 'سجل حضور وانصراف الموظفين'}
           {activeTab === 'reports' && 'لوحة التقارير الذكية'}
         </h3>
         <div className="flex gap-2">
+           {activeTab === 'attendance' && (
+              <button onClick={() => {
+                const tableData = data?.attendance || [];
+                const headers = ["ID", "Employee Name", "Date", "Check-In", "Check-Out"];
+                const csvRows = [headers.join(','), ...tableData.map(a => [a.id, `"${a.name}"`, a.date, a.checkIn, a.checkOut || ''].join(','))].join('\n');
+                const link = document.createElement("a");
+                link.setAttribute("href", encodeURI("data:text/csv;charset=utf-8,\uFEFF" + csvRows));
+                link.setAttribute("download", "attendance_report.csv");
+                link.click();
+              }} className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition">
+                <Download size={18} /> تصدير السجل
+              </button>
+           )}
            {activeTab === 'employees' && (
              <>
                <button onClick={() => {
@@ -241,6 +270,39 @@ export default function ModernCarriersPage() {
                     <td className="p-3 text-xs">{item.license}</td>
                     <td className="p-3" dir="ltr">{item.phone}</td>
                     <td className="p-3">{item.licenseExpiry}</td>
+                    <td className="p-3">
+                      <div className="flex gap-1">
+                        <button 
+                          onClick={() => {
+                            const now = new Date().toLocaleTimeString('sv-SE').slice(0, 5);
+                            const today = new Date().toLocaleDateString('sv-SE');
+                            const log = { id: Date.now(), employeeId: item.id, name: item.name, date: today, checkIn: now };
+                            const updated = [...(data?.attendance || []), log];
+                            setData({...data!, attendance: updated});
+                            localStorage.setItem('modern_carriers_attendance', JSON.stringify(updated));
+                            alert(`تم تسجيل حضور ${item.name} الساعة ${now}`);
+                          }}
+                          className="px-2 py-1 bg-green-50 text-green-700 rounded text-[10px] font-bold hover:bg-green-100"
+                        >حضور</button>
+                        <button 
+                          onClick={() => {
+                            const now = new Date().toLocaleTimeString('sv-SE').slice(0, 5);
+                            const today = new Date().toLocaleDateString('sv-SE');
+                            const logIndex = data?.attendance.findLastIndex(a => a.employeeId === item.id && a.date === today);
+                            if (logIndex !== undefined && logIndex !== -1) {
+                              const updated = [...data!.attendance];
+                              updated[logIndex] = { ...updated[logIndex], checkOut: now };
+                              setData({...data!, attendance: updated});
+                              localStorage.setItem('modern_carriers_attendance', JSON.stringify(updated));
+                              alert(`تم تسجيل انصراف ${item.name} الساعة ${now}`);
+                            } else {
+                              alert('يجب تسجيل الحضور أولاً اليوم');
+                            }
+                          }}
+                          className="px-2 py-1 bg-red-50 text-red-700 rounded text-[10px] font-bold hover:bg-red-100"
+                        >انصراف</button>
+                      </div>
+                    </td>
                     <td className="p-3 flex gap-2">
                       <button onClick={() => { setEditingItem(item); setIsEditing(true); }} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded"><Pencil size={16} /></button>
                       <button onClick={() => {
@@ -338,6 +400,33 @@ export default function ModernCarriersPage() {
           </div>
         )}
 
+        {data && activeTab === 'attendance' && (
+          <div className="overflow-x-auto">
+            <table className="w-full text-right">
+              <thead><tr className="bg-gray-50 border-b"><th className="p-3">التاريخ</th><th className="p-3">الاسم</th><th className="p-3">الحضور</th><th className="p-3">الانصراف</th><th className="p-3">إجراءات</th></tr></thead>
+              <tbody>
+                {data.attendance?.slice().reverse().map((item, i) => (
+                  <tr key={i} className="border-b">
+                    <td className="p-3 font-mono text-xs">{item.date}</td>
+                    <td className="p-3 font-bold">{item.name}</td>
+                    <td className="p-3 text-green-600 font-bold">{item.checkIn}</td>
+                    <td className="p-3 text-red-600 font-bold">{item.checkOut || '-'}</td>
+                    <td className="p-3">
+                      <button onClick={() => {
+                        if (confirm('حذف هذا السجل؟')) {
+                          const updated = data.attendance.filter(a => a.id !== item.id);
+                          setData({ ...data, attendance: updated });
+                          localStorage.setItem('modern_carriers_attendance', JSON.stringify(updated));
+                        }
+                      }} className="text-red-600 p-1 hover:bg-red-50 rounded"><Trash2 size={16} /></button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
         {data && activeTab === 'reports' && (
           <div className="space-y-6">
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
@@ -354,8 +443,8 @@ export default function ModernCarriersPage() {
                 <div className="text-xl font-black">{data.tasks?.filter(t => t.status === 'completed').length}</div>
               </div>
               <div className="bg-orange-50 p-4 rounded-xl border border-orange-100 text-center">
-                <div className="text-[10px] text-orange-600 font-bold mb-1">بانتظار العودة</div>
-                <div className="text-xl font-black">{data.trips?.filter(t => t.status === 'travelling').length}</div>
+                <div className="text-[10px] text-orange-600 font-bold mb-1">الحضور اليوم</div>
+                <div className="text-xl font-black">{data.attendance?.filter(a => a.date === new Date().toLocaleDateString('sv-SE')).length}</div>
               </div>
               <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100 text-center">
                 <div className="text-[10px] text-indigo-600 font-bold mb-1">إجمالي الرحلات</div>
@@ -477,7 +566,7 @@ export default function ModernCarriersPage() {
       )}
 
       <div className="mt-8 text-center text-[10px] text-gray-400">
-        نسخة v1.2.6 - تحديث شامل لحركة الأسطول والتقارير
+        نسخة v1.2.7 - تحديث سجل الحضور والانصراف
       </div>
     </div>
   );
