@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Truck, Navigation, FileText, Users, ExternalLink, Loader2, Lock } from 'lucide-react';
+import { Truck, Navigation, FileText, Users, ExternalLink, Loader2, Lock, ClipboardList } from 'lucide-react';
 
 interface FleetItem { id: number; type: string; plate: string; model: number; expiry: string; }
 interface CustodyItem { id: number; driverName: string; idNumber: number; type: string; status: string; }
 interface DeviceItem { id: number; type: string; truck: string; serial?: string; status: string; }
 interface DriverItem { id: number; name: string; plate: string; licenseExpiry: string; phone: number; }
+interface EmployeeItem { id: number; name: string; idNumber: number; license: string; phone: string; idExpiry: string; licenseExpiry: string; }
 
 export default function ModernCarriersPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => sessionStorage.getItem('modern_carriers_auth') === 'true');
@@ -16,6 +17,7 @@ export default function ModernCarriersPage() {
     custody: CustodyItem[];
     devices: DeviceItem[];
     drivers: DriverItem[];
+    employees: EmployeeItem[];
   } | null>(null);
   
   const [loading, setLoading] = useState(true);
@@ -123,6 +125,12 @@ export default function ModernCarriersPage() {
           className={`flex items-center gap-2 px-4 py-2 rounded-t-lg transition ${activeTab === 'devices' ? 'bg-white text-blue-600 border-b-2 border-blue-600 font-bold' : 'text-gray-600 hover:bg-gray-200'}`}
         >
           <Navigation size={18} /> أجهزة التتبع والتقنيات
+        </button>
+        <button 
+          onClick={() => setActiveTab('employees')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-t-lg transition ${activeTab === 'employees' ? 'bg-white text-blue-600 border-b-2 border-blue-600 font-bold' : 'text-gray-600 hover:bg-gray-200'}`}
+        >
+          <ClipboardList size={18} /> نموذج بيانات ومتابعة الموظفين
         </button>
       </div>
 
@@ -235,6 +243,37 @@ export default function ModernCarriersPage() {
                         {item.status || 'فعال'}
                       </span>
                     </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {data && activeTab === 'employees' && (
+          <div className="overflow-x-auto">
+            <table className="w-full text-right">
+              <thead>
+                <tr className="bg-gray-50 border-b">
+                  <th className="p-3">م</th>
+                  <th className="p-3">اسم الموظف</th>
+                  <th className="p-3">رقم الهوية</th>
+                  <th className="p-3">الرخصة</th>
+                  <th className="p-3">رقم الجوال</th>
+                  <th className="p-3">انتهاء الهوية</th>
+                  <th className="p-3">تاريخ انتهاء الرخصة</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.employees?.map((item, i) => (
+                  <tr key={i} className="border-b hover:bg-gray-50">
+                    <td className="p-3">{item.id}</td>
+                    <td className="p-3 font-semibold">{item.name}</td>
+                    <td className="p-3 text-gray-600">{item.idNumber || '-'}</td>
+                    <td className="p-3 text-gray-600">{item.license || '-'}</td>
+                    <td className="p-3 text-blue-600" dir="ltr" style={{ textAlign: 'right' }}>{item.phone || '-'}</td>
+                    <td className="p-3 text-gray-600">{item.idExpiry || '-'}</td>
+                    <td className="p-3 text-gray-600">{item.licenseExpiry || '-'}</td>
                   </tr>
                 ))}
               </tbody>

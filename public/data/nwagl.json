@@ -297,5 +297,52 @@
       "licenseExpiry": "26-1-1450",
       "phone": 593481825
     }
+  ],
+  "employees": [
+    {
+      "id": 1,
+      "name": "رامشاندرا ادهيكارى",
+      "idNumber": 2515677140,
+      "license": "نقل ثقيل",
+      "phone": "0553878950",
+      "idExpiry": "-",
+      "licenseExpiry": "1-11-1448"
+    },
+    {
+      "id": 2,
+      "name": "كاسام بارايار",
+      "idNumber": 2577909662,
+      "license": "نقل ثقيل",
+      "phone": "0550371543",
+      "idExpiry": "-",
+      "licenseExpiry": "14-3-1451"
+    },
+    {
+      "id": 3,
+      "name": "احمد حق الله الفكى عمر",
+      "idNumber": 2499853477,
+      "license": "نقل ثقيل",
+      "phone": "0503907395",
+      "idExpiry": "-",
+      "licenseExpiry": "5-2-1448"
+    },
+    {
+      "id": 4,
+      "name": "نافيد عباس",
+      "idNumber": 2605717830,
+      "license": "نقل ثقيل",
+      "phone": "0530698276",
+      "idExpiry": "-",
+      "licenseExpiry": "27-12-1451"
+    },
+    {
+      "id": 5,
+      "name": "جولو ساه ناريس ساه",
+      "idNumber": 2539064143,
+      "license": "نقل ثقيل",
+      "phone": "0593481825",
+      "idExpiry": "-",
+      "licenseExpiry": "26-1-1450"
+    }
   ]
 }
