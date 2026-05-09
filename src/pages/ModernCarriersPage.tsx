@@ -278,6 +278,65 @@ export default function ModernCarriersPage() {
           <div className="overflow-auto max-h-[600px] border rounded-lg"><table className="w-full text-right"><thead><tr className="bg-gray-50 border-b"><th className="p-3">م</th><th className="p-3">النوع</th><th className="p-3">اللوحة</th><th className="p-3">الموديل</th><th className="p-3">انتهاء الاستمارة</th></tr></thead><tbody>{data.fleet.map((item, i) => (<tr key={i} className="border-b hover:bg-gray-50"><td className="p-3">{item.id}</td><td className="p-3 font-semibold">{item.type}</td><td className="p-3 font-mono">{item.plate}</td><td className="p-3">{item.model}</td><td className="p-3 text-red-600 font-bold">{item.expiry}</td></tr>))}</tbody></table></div>
         )}
 
+        {data && activeTab === 'drivers' && (
+          <div className="overflow-auto max-h-[600px] border rounded-lg">
+            <table className="w-full text-right">
+              <thead><tr className="bg-gray-50 border-b"><th className="p-3">م</th><th className="p-3">الاسم</th><th className="p-3">اللوحة</th><th className="p-3">رقم الجوال</th><th className="p-3">انتهاء الرخصة</th></tr></thead>
+              <tbody>
+                {data.drivers.map((item, i) => (
+                  <tr key={i} className="border-b hover:bg-gray-50">
+                    <td className="p-3">{item.id}</td>
+                    <td className="p-3 font-bold">{item.name}</td>
+                    <td className="p-3 font-mono">{item.plate}</td>
+                    <td className="p-3" dir="ltr">{item.phone}</td>
+                    <td className="p-3 text-red-600">{item.licenseExpiry}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {data && activeTab === 'custody' && (
+          <div className="overflow-auto max-h-[600px] border rounded-lg">
+            <table className="w-full text-right">
+              <thead><tr className="bg-gray-50 border-b"><th className="p-3">م</th><th className="p-3">السائق</th><th className="p-3">رقم الهوية</th><th className="p-3">نوع العهدة</th><th className="p-3">الحالة</th></tr></thead>
+              <tbody>
+                {data.custody.map((item, i) => (
+                  <tr key={i} className="border-b hover:bg-gray-50">
+                    <td className="p-3">{item.id}</td>
+                    <td className="p-3 font-bold">{item.driverName}</td>
+                    <td className="p-3">{item.idNumber}</td>
+                    <td className="p-3">{item.type}</td>
+                    <td className="p-3">
+                      <span className="px-2 py-1 rounded-full text-[10px] bg-green-100 text-green-700 font-bold">{item.status}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {data && activeTab === 'devices' && (
+          <div className="overflow-auto max-h-[600px] border rounded-lg">
+            <table className="w-full text-right">
+              <thead><tr className="bg-gray-50 border-b"><th className="p-3">م</th><th className="p-3">اللوحة</th><th className="p-3">الرقم التسلسلي S/N</th><th className="p-3">النوع</th><th className="p-3">الحالة</th></tr></thead>
+              <tbody>
+                {data.devices.map((item, i) => (
+                  <tr key={i} className="border-b hover:bg-gray-50">
+                    <td className="p-3">{item.id}</td>
+                    <td className="p-3 font-bold font-mono">{item.plate}</td>
+                    <td className="p-3 font-mono text-xs">{item.sn}</td>
+                    <td className="p-3">{item.type}</td>
+                    <td className="p-3 text-green-600 font-bold">{item.status}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
         {data && activeTab === 'employees' && (
           <div className="overflow-auto max-h-[600px] border rounded-lg">
             <table className="w-full text-right">
@@ -608,7 +667,7 @@ export default function ModernCarriersPage() {
       )}
 
       <div className="mt-8 text-center text-[10px] text-gray-400">
-        نسخة v1.3.0 - إضافة خاصية التمرير الرأسي للجداول
+        نسخة v1.3.2 - استعادة كافة الجداول المفقودة (السائقين، العهد، الأجهزة)
       </div>
     </div>
   );
