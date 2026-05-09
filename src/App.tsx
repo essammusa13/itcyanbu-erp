@@ -139,7 +139,7 @@ function App() {
                         />
                         <div className="flex-1 flex flex-col min-w-0 overflow-hidden min-h-0 relative">
                           <Header />
-                          <div className="flex-1 flex flex-col overflow-hidden" key={activeModule}>
+                          <div className="flex-1 flex flex-col overflow-y-auto" key={activeModule}>
                             {renderModule()}
                           </div>
                         </div>
