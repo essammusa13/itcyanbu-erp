@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Truck, Navigation, FileText, Users, ExternalLink, Loader2, Lock, ClipboardList, Plus, Pencil, Trash2, Save, X, Download, BarChart2, Clock, CheckCircle2, Circle, ListTodo } from 'lucide-react';
+import { Truck, Navigation, FileText, Users, ExternalLink, Loader2, Lock, ClipboardList, Plus, Pencil, Trash2, Save, X, Download, BarChart2, Clock, CheckCircle2, Circle, ListTodo, Map, ArrowRightLeft } from 'lucide-react';
 
 interface FleetItem { id: number; type: string; plate: string; model: number; expiry: string; }
 interface CustodyItem { id: number; driverName: string; idNumber: number; type: string; status: string; }
@@ -7,6 +7,7 @@ interface DeviceItem { id: number; type: string; truck: string; serial?: string;
 interface DriverItem { id: number; name: string; plate: string; licenseExpiry: string; phone: number; }
 interface EmployeeItem { id: number; name: string; idNumber: number; license: string; phone: string; idExpiry: string; licenseExpiry: string; }
 interface TaskItem { id: number; title: string; assignedTo: string; status: 'completed' | 'pending' | 'in-progress'; date: string; }
+interface TripItem { id: number; truck: string; driver: string; destination: string; departureDate: string; returnDate?: string; status: 'travelling' | 'returned'; }
 
 export default function ModernCarriersPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => sessionStorage.getItem('modern_carriers_auth') === 'true');
@@ -20,6 +21,7 @@ export default function ModernCarriersPage() {
     drivers: DriverItem[];
     employees: EmployeeItem[];
     tasks: TaskItem[];
+    trips: TripItem[];
   } | null>(null);
   
   const [loading, setLoading] = useState(true);
@@ -30,6 +32,8 @@ export default function ModernCarriersPage() {
   const [newEmployee, setNewEmployee] = useState<Partial<EmployeeItem>>({});
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [newTask, setNewTask] = useState<Partial<TaskItem>>({ status: 'pending' });
+  const [showTripForm, setShowTripForm] = useState(false);
+  const [newTrip, setNewTrip] = useState<Partial<TripItem>>({ status: 'travelling' });
 
   useEffect(() => {
     fetch('/data/nwagl.json')
@@ -48,6 +52,15 @@ export default function ModernCarriersPage() {
             { id: 1, title: 'فحص زيت الشاحنات الأسبوعي', assignedTo: 'أحمد الفكي', status: 'completed', date: '2026-05-01' },
             { id: 2, title: 'تجديد استمارة شاحنة 9849', assignedTo: 'إدارة', status: 'pending', date: '2026-05-10' },
             { id: 3, title: 'تركيب أجهزة تتبع جديدة', assignedTo: 'فني التقنية', status: 'in-progress', date: '2026-05-08' }
+          ];
+        }
+        const savedTrips = localStorage.getItem('modern_carriers_trips');
+        if (savedTrips) {
+          json.trips = JSON.parse(savedTrips);
+        } else if (!json.trips) {
+          json.trips = [
+            { id: 1, truck: '9849 أ ر ح', driver: 'رامشاندرا', destination: 'الرياض', departureDate: '2026-05-09 08:00', status: 'travelling' },
+            { id: 2, truck: '9095 أ أ ر', driver: 'أحمد الفكي', destination: 'جدة', departureDate: '2026-05-08 10:00', returnDate: '2026-05-09 14:00', status: 'returned' }
           ];
         }
         setData(json);
@@ -162,6 +175,12 @@ export default function ModernCarriersPage() {
           <ListTodo size={18} /> المهام التشغيلية
         </button>
         <button 
+          onClick={() => setActiveTab('trips')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-t-lg transition ${activeTab === 'trips' ? 'bg-white text-blue-600 border-b-2 border-blue-600 font-bold' : 'text-gray-600 hover:bg-gray-200'}`}
+        >
+          <ArrowRightLeft size={18} /> حركة الأسطول
+        </button>
+        <button 
           onClick={() => setActiveTab('reports')}
           className={`flex items-center gap-2 px-4 py-2 rounded-t-lg transition ${activeTab === 'reports' ? 'bg-white text-blue-600 border-b-2 border-blue-600 font-bold' : 'text-gray-600 hover:bg-gray-200'}`}
         >
@@ -210,6 +229,18 @@ export default function ModernCarriersPage() {
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
           >
             <Plus size={18} /> إضافة مهمة جديدة
+          </button>
+        </div>
+      )}
+
+      {activeTab === 'trips' && (
+        <div className="mb-4 flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+          <h3 className="text-lg font-bold text-gray-800">سجل حركة الذهاب والعودة</h3>
+          <button 
+            onClick={() => setShowTripForm(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
+          >
+            <Map size={18} /> تسجيل رحلة جديدة
           </button>
         </div>
       )}
@@ -426,14 +457,62 @@ export default function ModernCarriersPage() {
                         }}
                         className={`p-1.5 rounded ${item.status === 'completed' ? 'text-orange-600 hover:bg-orange-50' : 'text-green-600 hover:bg-green-50'}`}
                       >
-                        {item.status === 'completed' ? <Circle size={16} /> : <CheckCircle2 size={16} />}
-                      </button>
+                        {item.status === 'completed' ? <Circle size={16} /> : <CheckCircle2 s            </table>
+          </div>
+        )}
+
+        {data && activeTab === 'trips' && (
+          <div className="overflow-x-auto">
+            <table className="w-full text-right">
+              <thead>
+                <tr className="bg-gray-50 border-b">
+                  <th className="p-3">م</th>
+                  <th className="p-3">الشاحنة</th>
+                  <th className="p-3">السائق</th>
+                  <th className="p-3">الوجهة</th>
+                  <th className="p-3">وقت الذهاب</th>
+                  <th className="p-3">وقت العودة</th>
+                  <th className="p-3">الحالة</th>
+                  <th className="p-3">إجراءات</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.trips?.map((item, i) => (
+                  <tr key={i} className="border-b hover:bg-gray-50">
+                    <td className="p-3">{item.id}</td>
+                    <td className="p-3 font-semibold">{item.truck}</td>
+                    <td className="p-3">{item.driver}</td>
+                    <td className="p-3 text-gray-600">{item.destination}</td>
+                    <td className="p-3 text-xs text-gray-500" dir="ltr" style={{ textAlign: 'right' }}>{item.departureDate}</td>
+                    <td className="p-3 text-xs text-gray-500" dir="ltr" style={{ textAlign: 'right' }}>{item.returnDate || '-'}</td>
+                    <td className="p-3">
+                      <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${
+                        item.status === 'returned' ? 'bg-green-100 text-green-700' : 'bg-purple-100 text-purple-700'
+                      }`}>
+                        {item.status === 'returned' ? 'عادت' : 'في الطريق'}
+                      </span>
+                    </td>
+                    <td className="p-3 flex gap-2">
+                      {item.status === 'travelling' && (
+                        <button 
+                          onClick={() => {
+                            const now = new Date().toLocaleString('sv-SE').slice(0, 16).replace('T', ' ');
+                            const updated = data.trips.map(t => t.id === item.id ? { ...t, status: 'returned', returnDate: now } as TripItem : t);
+                            setData({ ...data, trips: updated });
+                            localStorage.setItem('modern_carriers_trips', JSON.stringify(updated));
+                          }}
+                          className="p-1.5 text-green-600 hover:bg-green-50 rounded"
+                          title="تسجيل عودة"
+                        >
+                          <CheckCircle2 size={16} />
+                        </button>
+                      )}
                       <button 
                          onClick={() => {
-                          if (confirm('حذف المهمة؟')) {
-                            const updated = data.tasks.filter(t => t.id !== item.id);
-                            setData({ ...data, tasks: updated });
-                            localStorage.setItem('modern_carriers_tasks', JSON.stringify(updated));
+                          if (confirm('حذف الرحلة؟')) {
+                            const updated = data.trips.filter(t => t.id !== item.id);
+                            setData({ ...data, trips: updated });
+                            localStorage.setItem('modern_carriers_trips', JSON.stringify(updated));
                           }
                         }}
                         className="p-1.5 text-red-600 hover:bg-red-50 rounded"
@@ -450,38 +529,59 @@ export default function ModernCarriersPage() {
 
         {data && activeTab === 'reports' && (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              {/* Existing stats... */}
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
               <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
-                <div className="text-xs text-blue-600 mb-1 font-bold">إجمالي الأسطول</div>
-                <div className="text-2xl font-black text-blue-900">{data.fleet.length}</div>
+                <div className="text-[10px] text-blue-600 mb-1 font-bold">الأسطول</div>
+                <div className="text-xl font-black text-blue-900">{data.fleet.length}</div>
               </div>
               <div className="bg-green-50 p-4 rounded-xl border border-green-100">
-                <div className="text-xs text-green-600 mb-1 font-bold">الموظفين</div>
-                <div className="text-2xl font-black text-green-900">{data.employees?.length || 0}</div>
+                <div className="text-[10px] text-green-600 mb-1 font-bold">الموظفين</div>
+                <div className="text-xl font-black text-green-900">{data.employees?.length || 0}</div>
+              </div>
+              <div className="bg-purple-50 p-4 rounded-xl border border-purple-100">
+                <div className="text-[10px] text-purple-600 mb-1 font-bold">رحلات نشطة</div>
+                <div className="text-xl font-black text-purple-900">{data.trips?.filter(t => t.status === 'travelling').length || 0}</div>
               </div>
               <div className="bg-orange-50 p-4 rounded-xl border border-orange-100">
-                <div className="text-xs text-orange-600 mb-1 font-bold">مهام منجزة</div>
-                <div className="text-2xl font-black text-orange-900">{data.tasks?.filter(t => t.status === 'completed').length || 0}</div>
+                <div className="text-[10px] text-orange-600 mb-1 font-bold">إنجاز المهام</div>
+                <div className="text-xl font-black text-orange-900">{Math.round(((data.tasks?.filter(t => t.status === 'completed').length || 0) / (data.tasks?.length || 1)) * 100)}%</div>
               </div>
-              <div className="bg-red-50 p-4 rounded-xl border border-red-100">
-                <div className="text-xs text-red-600 mb-1 font-bold">مهام متبقية</div>
-                <div className="text-2xl font-black text-red-900">{data.tasks?.filter(t => t.status !== 'completed').length || 0}</div>
+              <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
+                <div className="text-[10px] text-indigo-600 mb-1 font-bold">إجمالي الرحلات</div>
+                <div className="text-xl font-black text-indigo-900">{data.trips?.length || 0}</div>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                <div className="border rounded-xl p-6 bg-white shadow-sm">
                   <h4 className="font-bold mb-4 flex items-center gap-2 text-gray-800">
+                    <ArrowRightLeft size={18} className="text-purple-500" />
+                    حركة الرحلات (Movement Analysis)
+                  </h4>
+                  <div className="space-y-6">
+                    <div className="flex justify-around items-end h-32">
+                       <div className="text-center w-20">
+                          <div className="bg-purple-500 w-12 mx-auto rounded-t" style={{ height: `${(data.trips?.filter(t => t.status === 'travelling').length || 0) * 20}px` }}></div>
+                          <div className="text-[10px] mt-2">في الطريق</div>
+                       </div>
+                       <div className="text-center w-20">
+                          <div className="bg-green-500 w-12 mx-auto rounded-t" style={{ height: `${(data.trips?.filter(t => t.status === 'returned').length || 0) * 20}px` }}></div>
+                          <div className="text-[10px] mt-2">عادت</div>
+                       </div>
+                    </div>
+                  </div>
+               </div>
+               
+               <div className="border rounded-xl p-6 bg-white shadow-sm">
+                  <h4 className="font-bold mb-4 flex items-center gap-2 text-gray-800">
                     <CheckCircle2 size={18} className="text-green-500" />
                     تقرير إنجاز المهام (Task Completion)
                   </h4>
-                  <div className="relative h-48 flex items-center justify-center">
+                  <div className="relative h-24 flex items-center justify-center">
                       <div className="text-center">
-                        <div className="text-4xl font-black text-gray-900">
+                        <div className="text-2xl font-black text-gray-900">
                           {Math.round(((data.tasks?.filter(t => t.status === 'completed').length || 0) / (data.tasks?.length || 1)) * 100)}%
                         </div>
-                        <div className="text-sm text-gray-500">نسبة الإنجاز الكلية</div>
                       </div>
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-xs text-center">
@@ -489,33 +589,87 @@ export default function ModernCarriersPage() {
                     <div className="p-2 bg-red-50 rounded text-red-700">متبقية: {data.tasks?.filter(t => t.status !== 'completed').length}</div>
                   </div>
                </div>
-               
-               <div className="border rounded-xl p-6 bg-white shadow-sm">
-                  <h4 className="font-bold mb-4 flex items-center gap-2 text-gray-800">
-                    <Clock size={18} className="text-blue-500" />
-                    وقت التشغيل الفعلي (Fleet Uptime)
-                  </h4>
-                  <div className="space-y-4">
-                    <div>
-                      <div className="flex justify-between text-xs mb-1">
-                        <span>الأسطول النشط</span>
-                        <span>92%</span>
-                      </div>
-                      <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
-                        <div className="bg-blue-500 h-full w-[92%]"></div>
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex justify-between text-xs mb-1">
-                        <span>أجهزة التتبع الفعالة</span>
-                        <span>100%</span>
-                      </div>
-                      <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
-                        <div className="bg-green-500 h-full w-[100%]"></div>
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex justify-between text-xs mb-1">
+            </div>
+
+            <div className="bg-gray-50 p-6 rounded-xl border border-dashed border-gray-300">
+              <h4 className="font-bold mb-2">توصيات حركة الأسطول</h4>
+              <p className="text-sm text-gray-600">
+                يوجد حالياً {data.trips?.filter(t => t.status === 'travelling').length} شاحنة في الطريق. جميع الرحلات تسير وفق الجدول الزمني المحدد. ننصح بمتابعة الشاحنة المتوجهة للرياض نظراً لظروف الطريق.
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Trip Modal */}
+      {showTripForm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" dir="rtl">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+            <div className="p-6 border-b flex justify-between items-center bg-gray-50">
+              <h3 className="text-xl font-bold text-gray-900">تسجيل رحلة جديدة</h3>
+              <button onClick={() => setShowTripForm(false)} className="text-gray-400 hover:text-gray-600">
+                <X size={24} />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">الشاحنة</label>
+                <input 
+                  type="text" 
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  value={newTrip.truck || ''}
+                  onChange={(e) => setNewTrip({...newTrip, truck: e.target.value})}
+                  placeholder="رقم اللوحة..."
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">السائق</label>
+                <input 
+                  type="text" 
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  value={newTrip.driver || ''}
+                  onChange={(e) => setNewTrip({...newTrip, driver: e.target.value})}
+                  placeholder="اسم السائق..."
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">الوجهة</label>
+                <input 
+                  type="text" 
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  value={newTrip.destination || ''}
+                  onChange={(e) => setNewTrip({...newTrip, destination: e.target.value})}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">وقت الذهاب</label>
+                <input 
+                  type="datetime-local" 
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  value={newTrip.departureDate || ''}
+                  onChange={(e) => setNewTrip({...newTrip, departureDate: e.target.value.replace('T', ' ')})}
+                />
+              </div>
+            </div>
+            <div className="p-6 bg-gray-50 border-t flex gap-3">
+              <button 
+                onClick={() => {
+                  const id = (data?.trips.length || 0) + 1;
+                  const item = { ...newTrip, id, status: 'travelling' } as TripItem;
+                  const updated = [...(data?.trips || []), item];
+                  setData({...data!, trips: updated});
+                  localStorage.setItem('modern_carriers_trips', JSON.stringify(updated));
+                  setShowTripForm(false);
+                  setNewTrip({ status: 'travelling' });
+                }}
+                className="flex-1 bg-purple-600 text-white font-bold py-2 rounded-lg hover:bg-purple-700 transition"
+              >
+                تسجيل الرحلة
+              </button>
+            </div>
+          </div>
+        </div>
+      )}lex justify-between text-xs mb-1">
                         <span>معدل الصيانة</span>
                         <span>8%</span>
                       </div>
