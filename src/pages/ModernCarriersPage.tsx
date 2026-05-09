@@ -122,8 +122,8 @@ export default function ModernCarriersPage() {
       {/* Header Area */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-black text-gray-900 mb-1">بيانات مؤسسة نواقل</h1>
-          <p className="text-gray-500">سجل جرد أسطول الشاحنات والمعدات والبيانات</p>
+          <h1 className="text-3xl font-black text-gray-900 mb-1">مؤسسة نواقل الحديثة للنقليات</h1>
+          <p className="text-gray-500">لوحة التقارير والتتبع الذكية</p>
         </div>
         <div className="flex items-center gap-3">
           <button 
@@ -679,7 +679,7 @@ export default function ModernCarriersPage() {
       )}
 
       <div className="mt-8 text-center text-[10px] text-gray-400">
-        نسخة v1.3.5 - تقييد الحضور والانصراف لمرة واحدة يومياً
+        نسخة v1.3.6 - تحديث المسمى الرسمي والواجهة
       </div>
     </div>
   );
