@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Truck, Navigation, FileText, Users, ExternalLink, Loader2, Lock, ClipboardList, Plus, Pencil, Trash2, X, Download, BarChart2, CheckCircle2, Circle, ListTodo, Map, ArrowRightLeft } from 'lucide-react';
+import { Truck, Navigation, FileText, Users, ExternalLink, Loader2, Lock, ClipboardList, Plus, Pencil, Trash2, X, Download, BarChart2, CheckCircle2, Circle, ListTodo, Map, ArrowRightLeft, Clock } from 'lucide-react';
 
 interface FleetItem { id: number; type: string; plate: string; model: number; expiry: string; }
 interface CustodyItem { id: number; driverName: string; idNumber: number; type: string; status: string; }
@@ -288,10 +288,13 @@ export default function ModernCarriersPage() {
                           onClick={() => {
                             const now = new Date().toLocaleTimeString('sv-SE').slice(0, 5);
                             const today = new Date().toLocaleDateString('sv-SE');
-                            const logIndex = data?.attendance.findLastIndex(a => a.employeeId === item.id && a.date === today);
-                            if (logIndex !== undefined && logIndex !== -1) {
+                            // Find the last check-in for this employee today
+                            const lastIdx = (data?.attendance || []).reduce((acc: number, curr: AttendanceLog, idx: number) => 
+                              (curr.employeeId === item.id && curr.date === today) ? idx : acc, -1);
+                            
+                            if (lastIdx !== -1) {
                               const updated = [...data!.attendance];
-                              updated[logIndex] = { ...updated[logIndex], checkOut: now };
+                              updated[lastIdx] = { ...updated[lastIdx], checkOut: now };
                               setData({...data!, attendance: updated});
                               localStorage.setItem('modern_carriers_attendance', JSON.stringify(updated));
                               alert(`تم تسجيل انصراف ${item.name} الساعة ${now}`);
