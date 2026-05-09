@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Truck, Navigation, FileText, Users, ExternalLink, Loader2, Lock, ClipboardList, Plus, Pencil, Trash2, Save, X, Download, BarChart2, Clock, DollarSign } from 'lucide-react';
+import { Truck, Navigation, FileText, Users, ExternalLink, Loader2, Lock, ClipboardList, Plus, Pencil, Trash2, Save, X, Download, BarChart2, Clock, DollarSign, CheckCircle2, Circle, ListTodo } from 'lucide-react';
 
 interface FleetItem { id: number; type: string; plate: string; model: number; expiry: string; }
 interface CustodyItem { id: number; driverName: string; idNumber: number; type: string; status: string; }
 interface DeviceItem { id: number; type: string; truck: string; serial?: string; status: string; }
 interface DriverItem { id: number; name: string; plate: string; licenseExpiry: string; phone: number; }
 interface EmployeeItem { id: number; name: string; idNumber: number; license: string; phone: string; idExpiry: string; licenseExpiry: string; }
+interface TaskItem { id: number; title: string; assignedTo: string; status: 'completed' | 'pending' | 'in-progress'; date: string; }
 
 export default function ModernCarriersPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => sessionStorage.getItem('modern_carriers_auth') === 'true');
@@ -18,6 +19,7 @@ export default function ModernCarriersPage() {
     devices: DeviceItem[];
     drivers: DriverItem[];
     employees: EmployeeItem[];
+    tasks: TaskItem[];
   } | null>(null);
   
   const [loading, setLoading] = useState(true);
@@ -26,6 +28,8 @@ export default function ModernCarriersPage() {
   const [editingItem, setEditingItem] = useState<EmployeeItem | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newEmployee, setNewEmployee] = useState<Partial<EmployeeItem>>({});
+  const [showTaskForm, setShowTaskForm] = useState(false);
+  const [newTask, setNewTask] = useState<Partial<TaskItem>>({ status: 'pending' });
 
   useEffect(() => {
     fetch('/data/nwagl.json')
@@ -35,6 +39,16 @@ export default function ModernCarriersPage() {
         const savedEmployees = localStorage.getItem('modern_carriers_employees');
         if (savedEmployees) {
           json.employees = JSON.parse(savedEmployees);
+        }
+        const savedTasks = localStorage.getItem('modern_carriers_tasks');
+        if (savedTasks) {
+          json.tasks = JSON.parse(savedTasks);
+        } else if (!json.tasks) {
+          json.tasks = [
+            { id: 1, title: 'فحص زيت الشاحنات الأسبوعي', assignedTo: 'أحمد الفكي', status: 'completed', date: '2026-05-01' },
+            { id: 2, title: 'تجديد استمارة شاحنة 9849', assignedTo: 'إدارة', status: 'pending', date: '2026-05-10' },
+            { id: 3, title: 'تركيب أجهزة تتبع جديدة', assignedTo: 'فني التقنية', status: 'in-progress', date: '2026-05-08' }
+          ];
         }
         setData(json);
         setLoading(false);
@@ -142,6 +156,12 @@ export default function ModernCarriersPage() {
           <ClipboardList size={18} /> نموذج بيانات ومتابعة الموظفين
         </button>
         <button 
+          onClick={() => setActiveTab('tasks')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-t-lg transition ${activeTab === 'tasks' ? 'bg-white text-blue-600 border-b-2 border-blue-600 font-bold' : 'text-gray-600 hover:bg-gray-200'}`}
+        >
+          <ListTodo size={18} /> المهام التشغيلية
+        </button>
+        <button 
           onClick={() => setActiveTab('reports')}
           className={`flex items-center gap-2 px-4 py-2 rounded-t-lg transition ${activeTab === 'reports' ? 'bg-white text-blue-600 border-b-2 border-blue-600 font-bold' : 'text-gray-600 hover:bg-gray-200'}`}
         >
@@ -198,6 +218,18 @@ export default function ModernCarriersPage() {
               <Plus size={18} /> إضافة موظف جديد
             </button>
           </div>
+        </div>
+      )}
+
+      {activeTab === 'tasks' && (
+        <div className="mb-4 flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+          <h3 className="text-lg font-bold text-gray-800">سجل المهام اليومية</h3>
+          <button 
+            onClick={() => setShowTaskForm(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+          >
+            <Plus size={18} /> إضافة مهمة جديدة
+          </button>
         </div>
       )}
 
@@ -375,93 +407,215 @@ export default function ModernCarriersPage() {
           </div>
         )}
 
+        {data && activeTab === 'tasks' && (
+          <div className="overflow-x-auto">
+            <table className="w-full text-right">
+              <thead>
+                <tr className="bg-gray-50 border-b">
+                  <th className="p-3">م</th>
+                  <th className="p-3">المهمة</th>
+                  <th className="p-3">المسؤول</th>
+                  <th className="p-3">التاريخ</th>
+                  <th className="p-3">الحالة</th>
+                  <th className="p-3">إجراءات</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.tasks?.map((item, i) => (
+                  <tr key={i} className="border-b hover:bg-gray-50">
+                    <td className="p-3">{item.id}</td>
+                    <td className="p-3 font-semibold">{item.title}</td>
+                    <td className="p-3 text-gray-600">{item.assignedTo}</td>
+                    <td className="p-3 text-gray-500">{item.date}</td>
+                    <td className="p-3">
+                      <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${
+                        item.status === 'completed' ? 'bg-green-100 text-green-700' :
+                        item.status === 'in-progress' ? 'bg-blue-100 text-blue-700' :
+                        'bg-orange-100 text-orange-700'
+                      }`}>
+                        {item.status === 'completed' ? 'مكتملة' : item.status === 'in-progress' ? 'قيد التنفيذ' : 'معلقة'}
+                      </span>
+                    </td>
+                    <td className="p-3 flex gap-2">
+                      <button 
+                        onClick={() => {
+                          const updated = data.tasks.map(t => t.id === item.id ? { ...t, status: t.status === 'completed' ? 'pending' : 'completed' } as TaskItem : t);
+                          setData({ ...data, tasks: updated });
+                          localStorage.setItem('modern_carriers_tasks', JSON.stringify(updated));
+                        }}
+                        className={`p-1.5 rounded ${item.status === 'completed' ? 'text-orange-600 hover:bg-orange-50' : 'text-green-600 hover:bg-green-50'}`}
+                      >
+                        {item.status === 'completed' ? <Circle size={16} /> : <CheckCircle2 size={16} />}
+                      </button>
+                      <button 
+                         onClick={() => {
+                          if (confirm('حذف المهمة؟')) {
+                            const updated = data.tasks.filter(t => t.id !== item.id);
+                            setData({ ...data, tasks: updated });
+                            localStorage.setItem('modern_carriers_tasks', JSON.stringify(updated));
+                          }
+                        }}
+                        className="p-1.5 text-red-600 hover:bg-red-50 rounded"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
         {data && activeTab === 'reports' && (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-blue-50 p-6 rounded-xl border border-blue-100">
-                <div className="flex items-center gap-3 text-blue-600 mb-2">
-                  <Truck size={24} />
-                  <span className="font-bold">إجمالي الأسطول</span>
-                </div>
-                <div className="text-3xl font-black text-blue-900">{data.fleet.length} مركبة</div>
-                <div className="text-sm text-blue-600 mt-1">منها 11 شاحنة و 13 مقطورة</div>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {/* Existing stats... */}
+              <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                <div className="text-xs text-blue-600 mb-1 font-bold">إجمالي الأسطول</div>
+                <div className="text-2xl font-black text-blue-900">{data.fleet.length}</div>
               </div>
-              
-              <div className="bg-green-50 p-6 rounded-xl border border-green-100">
-                <div className="flex items-center gap-3 text-green-600 mb-2">
-                  <Users size={24} />
-                  <span className="font-bold">القوة العاملة</span>
-                </div>
-                <div className="text-3xl font-black text-green-900">{data.employees?.length || 0} موظف</div>
-                <div className="text-sm text-green-600 mt-1">سائقين وفنيين وإداريين</div>
+              <div className="bg-green-50 p-4 rounded-xl border border-green-100">
+                <div className="text-xs text-green-600 mb-1 font-bold">الموظفين</div>
+                <div className="text-2xl font-black text-green-900">{data.employees?.length || 0}</div>
               </div>
-
-              <div className="bg-purple-50 p-6 rounded-xl border border-purple-100">
-                <div className="flex items-center gap-3 text-purple-600 mb-2">
-                  <DollarSign size={24} />
-                  <span className="font-bold">تحليل التكاليف</span>
-                </div>
-                <div className="text-3xl font-black text-purple-900">متاح قريباً</div>
-                <div className="text-sm text-purple-600 mt-1">تتبع الصيانة والوقود</div>
+              <div className="bg-orange-50 p-4 rounded-xl border border-orange-100">
+                <div className="text-xs text-orange-600 mb-1 font-bold">مهام منجزة</div>
+                <div className="text-2xl font-black text-orange-900">{data.tasks?.filter(t => t.status === 'completed').length || 0}</div>
+              </div>
+              <div className="bg-red-50 p-4 rounded-xl border border-red-100">
+                <div className="text-xs text-red-600 mb-1 font-bold">مهام متبقية</div>
+                <div className="text-2xl font-black text-red-900">{data.tasks?.filter(t => t.status !== 'completed').length || 0}</div>
               </div>
             </div>
 
-            <div className="bg-gray-50 p-8 rounded-xl border border-dashed border-gray-300 text-center">
-              <BarChart2 className="mx-auto text-gray-400 mb-4" size={48} />
-              <h4 className="text-lg font-bold text-gray-700">الرسوم البيانية التفاعلية</h4>
-              <p className="text-gray-500 max-w-md mx-auto mt-2">
-                سيتم هنا عرض رسوم بيانية توضح معدلات الأعطال (Downtime) وتكاليف التشغيل الشهرية بناءً على البيانات المسجلة.
-              </p>
-              <button className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-                توليد تقرير الأداء الشهري
-              </button>
-            </div>
-
-            <div className="grid grid-cols-2 gap-6">
-               <div className="border rounded-xl p-4">
-                  <h4 className="font-bold mb-4 flex items-center gap-2">
-                    <Clock size={18} className="text-orange-500" />
-                    حالة التشغيل (Real-time Status)
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+               <div className="border rounded-xl p-6 bg-white shadow-sm">
+                  <h4 className="font-bold mb-4 flex items-center gap-2 text-gray-800">
+                    <CheckCircle2 size={18} className="text-green-500" />
+                    تقرير إنجاز المهام (Task Completion)
                   </h4>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center text-sm">
-                      <span>الشاحنات النشطة</span>
-                      <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold text-[10px]">85%</span>
-                    </div>
-                    <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
-                      <div className="bg-green-500 h-full w-[85%]"></div>
-                    </div>
-                    <div className="flex justify-between items-center text-sm">
-                      <span>معدل التوقف (Downtime)</span>
-                      <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-bold text-[10px]">15%</span>
-                    </div>
-                    <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
-                      <div className="bg-red-500 h-full w-[15%]"></div>
-                    </div>
+                  <div className="relative h-48 flex items-center justify-center">
+                      <div className="text-center">
+                        <div className="text-4xl font-black text-gray-900">
+                          {Math.round(((data.tasks?.filter(t => t.status === 'completed').length || 0) / (data.tasks?.length || 1)) * 100)}%
+                        </div>
+                        <div className="text-sm text-gray-500">نسبة الإنجاز الكلية</div>
+                      </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-xs text-center">
+                    <div className="p-2 bg-green-50 rounded text-green-700">مكتملة: {data.tasks?.filter(t => t.status === 'completed').length}</div>
+                    <div className="p-2 bg-red-50 rounded text-red-700">متبقية: {data.tasks?.filter(t => t.status !== 'completed').length}</div>
                   </div>
                </div>
                
-               <div className="border rounded-xl p-4">
-                  <h4 className="font-bold mb-4">قوالب التقارير المتاحة</h4>
-                  <div className="grid grid-cols-1 gap-2">
-                    <button className="text-right p-2 hover:bg-gray-50 rounded text-sm border flex items-center justify-between">
-                      <span>تقرير الصيانة الأسبوعي</span>
-                      <FileText size={16} className="text-gray-400" />
-                    </button>
-                    <button className="text-right p-2 hover:bg-gray-50 rounded text-sm border flex items-center justify-between">
-                      <span>كشف رواتب السائقين الشهري</span>
-                      <FileText size={16} className="text-gray-400" />
-                    </button>
-                    <button className="text-right p-2 hover:bg-gray-50 rounded text-sm border flex items-center justify-between">
-                      <span>سجل استهلاك الوقود</span>
-                      <FileText size={16} className="text-gray-400" />
-                    </button>
+               <div className="border rounded-xl p-6 bg-white shadow-sm">
+                  <h4 className="font-bold mb-4 flex items-center gap-2 text-gray-800">
+                    <Clock size={18} className="text-blue-500" />
+                    وقت التشغيل الفعلي (Fleet Uptime)
+                  </h4>
+                  <div className="space-y-4">
+                    <div>
+                      <div className="flex justify-between text-xs mb-1">
+                        <span>الأسطول النشط</span>
+                        <span>92%</span>
+                      </div>
+                      <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                        <div className="bg-blue-500 h-full w-[92%]"></div>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex justify-between text-xs mb-1">
+                        <span>أجهزة التتبع الفعالة</span>
+                        <span>100%</span>
+                      </div>
+                      <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                        <div className="bg-green-500 h-full w-[100%]"></div>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex justify-between text-xs mb-1">
+                        <span>معدل الصيانة</span>
+                        <span>8%</span>
+                      </div>
+                      <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                        <div className="bg-red-500 h-full w-[8%]"></div>
+                      </div>
+                    </div>
                   </div>
                </div>
+            </div>
+
+            <div className="bg-gray-50 p-6 rounded-xl border border-dashed border-gray-300">
+              <h4 className="font-bold mb-2">توصيات النظام (AI Insights)</h4>
+              <p className="text-sm text-gray-600">
+                بناءً على المهام الحالية، يوجد تأخير في "تجديد استمارة شاحنة 9849". ننصح بتكليف مسؤول إضافي لإنهاء المهام المعلقة لزيادة كفاءة الأسطول.
+              </p>
             </div>
           </div>
         )}
       </div>
+
+      {/* Tasks Modal */}
+      {showTaskForm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" dir="rtl">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+            <div className="p-6 border-b flex justify-between items-center bg-gray-50">
+              <h3 className="text-xl font-bold text-gray-900">إضافة مهمة جديدة</h3>
+              <button onClick={() => setShowTaskForm(false)} className="text-gray-400 hover:text-gray-600">
+                <X size={24} />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">عنوان المهمة</label>
+                <input 
+                  type="text" 
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  value={newTask.title || ''}
+                  onChange={(e) => setNewTask({...newTask, title: e.target.value})}
+                  placeholder="مثلاً: فحص الإطارات..."
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">المسؤول</label>
+                <input 
+                  type="text" 
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  value={newTask.assignedTo || ''}
+                  onChange={(e) => setNewTask({...newTask, assignedTo: e.target.value})}
+                  placeholder="اسم الموظف أو القسم"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">تاريخ الاستحقاق</label>
+                <input 
+                  type="date" 
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  value={newTask.date || ''}
+                  onChange={(e) => setNewTask({...newTask, date: e.target.value})}
+                />
+              </div>
+            </div>
+            <div className="p-6 bg-gray-50 border-t flex gap-3">
+              <button 
+                onClick={() => {
+                  const id = (data?.tasks.length || 0) + 1;
+                  const item = { ...newTask, id, status: 'pending' } as TaskItem;
+                  const updated = [...(data?.tasks || []), item];
+                  setData({...data!, tasks: updated});
+                  localStorage.setItem('modern_carriers_tasks', JSON.stringify(updated));
+                  setShowTaskForm(false);
+                  setNewTask({ status: 'pending' });
+                }}
+                className="flex-1 bg-blue-600 text-white font-bold py-2 rounded-lg hover:bg-blue-700 transition"
+              >
+                إضافة المهمة
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Add/Edit Modal */}
       {(showAddForm || isEditing) && (
