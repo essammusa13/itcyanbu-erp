@@ -353,37 +353,50 @@ export default function ModernCarriersPage() {
                     <td className="p-3">{item.licenseExpiry}</td>
                     <td className="p-3">
                       <div className="flex gap-1">
-                        <button 
-                          onClick={() => {
-                            const now = new Date().toLocaleTimeString('sv-SE').slice(0, 5);
-                            const today = new Date().toLocaleDateString('sv-SE');
-                            const log = { id: Date.now(), employeeId: item.id, name: item.name, date: today, checkIn: now };
-                            const updated = [...(data?.attendance || []), log];
-                            setData({...data!, attendance: updated});
-                            localStorage.setItem('modern_carriers_attendance', JSON.stringify(updated));
-                            alert(`تم تسجيل حضور ${item.name} الساعة ${now}`);
-                          }}
-                          className="px-2 py-1 bg-green-50 text-green-700 rounded text-[10px] font-bold hover:bg-green-100"
-                        >حضور</button>
-                        <button 
-                          onClick={() => {
-                            const now = new Date().toLocaleTimeString('sv-SE').slice(0, 5);
-                            const today = new Date().toLocaleDateString('sv-SE');
-                            const lastIdx = (data?.attendance || []).reduce((acc: number, curr: AttendanceLog, idx: number) => 
-                              (curr.employeeId === item.id && curr.date === today) ? idx : acc, -1);
-                            
-                            if (lastIdx !== -1) {
-                              const updated = [...data!.attendance];
-                              updated[lastIdx] = { ...updated[lastIdx], checkOut: now };
-                              setData({...data!, attendance: updated});
-                              localStorage.setItem('modern_carriers_attendance', JSON.stringify(updated));
-                              alert(`تم تسجيل انصراف ${item.name} الساعة ${now}`);
-                            } else {
-                              alert('يجب تسجيل الحضور أولاً اليوم');
-                            }
-                          }}
-                          className="px-2 py-1 bg-red-50 text-red-700 rounded text-[10px] font-bold hover:bg-red-100"
-                        >انصراف</button>
+                        {(() => {
+                          const today = new Date().toLocaleDateString('sv-SE');
+                          const todayLog = (data?.attendance || []).find(a => a.employeeId === item.id && a.date === today);
+                          const hasCheckedIn = !!todayLog;
+                          const hasCheckedOut = !!todayLog?.checkOut;
+
+                          return (
+                            <>
+                              <button 
+                                disabled={hasCheckedIn}
+                                onClick={() => {
+                                  const now = new Date().toLocaleTimeString('sv-SE').slice(0, 5);
+                                  const log = { id: Date.now(), employeeId: item.id, name: item.name, date: today, checkIn: now };
+                                  const updated = [...(data?.attendance || []), log];
+                                  setData({...data!, attendance: updated});
+                                  localStorage.setItem('modern_carriers_attendance', JSON.stringify(updated));
+                                  alert(`تم تسجيل حضور ${item.name} الساعة ${now}`);
+                                }}
+                                className={`px-2 py-1 rounded text-[10px] font-bold transition ${hasCheckedIn ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-green-50 text-green-700 hover:bg-green-100'}`}
+                              >
+                                {hasCheckedIn ? 'تم الحضور' : 'حضور'}
+                              </button>
+                              <button 
+                                disabled={!hasCheckedIn || hasCheckedOut}
+                                onClick={() => {
+                                  const now = new Date().toLocaleTimeString('sv-SE').slice(0, 5);
+                                  const lastIdx = (data?.attendance || []).reduce((acc: number, curr: AttendanceLog, idx: number) => 
+                                    (curr.employeeId === item.id && curr.date === today) ? idx : acc, -1);
+                                  
+                                  if (lastIdx !== -1) {
+                                    const updated = [...data!.attendance];
+                                    updated[lastIdx] = { ...updated[lastIdx], checkOut: now };
+                                    setData({...data!, attendance: updated});
+                                    localStorage.setItem('modern_carriers_attendance', JSON.stringify(updated));
+                                    alert(`تم تسجيل انصراف ${item.name} الساعة ${now}`);
+                                  }
+                                }}
+                                className={`px-2 py-1 rounded text-[10px] font-bold transition ${(!hasCheckedIn || hasCheckedOut) ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-red-50 text-red-700 hover:bg-red-100'}`}
+                              >
+                                {hasCheckedOut ? 'تم الانصراف' : 'انصراف'}
+                              </button>
+                            </>
+                          );
+                        })()}
                       </div>
                     </td>
                     <td className="p-3">
@@ -666,7 +679,7 @@ export default function ModernCarriersPage() {
       )}
 
       <div className="mt-8 text-center text-[10px] text-gray-400">
-        نسخة v1.3.4 - إتاحة الحضور للجميع وقصر التعديل على المسؤول
+        نسخة v1.3.5 - تقييد الحضور والانصراف لمرة واحدة يومياً
       </div>
     </div>
   );
