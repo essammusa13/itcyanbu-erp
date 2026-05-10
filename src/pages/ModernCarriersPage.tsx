@@ -173,12 +173,6 @@ export default function ModernCarriersPage() {
           <Truck size={18} /> أسطول الشاحنات وأجهزة التتبع
         </button>
         <button 
-          onClick={() => setActiveTab('drivers')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-t-lg transition whitespace-nowrap ${activeTab === 'drivers' ? 'bg-white text-blue-600 border-b-2 border-blue-600 font-bold' : 'text-gray-600 hover:bg-gray-200'}`}
-        >
-          <Users size={18} /> بيانات السائقين
-        </button>
-        <button 
           onClick={() => setActiveTab('custody')}
           className={`flex items-center gap-2 px-4 py-2 rounded-t-lg transition whitespace-nowrap ${activeTab === 'custody' ? 'bg-white text-blue-600 border-b-2 border-blue-600 font-bold' : 'text-gray-600 hover:bg-gray-200'}`}
         >
@@ -220,7 +214,6 @@ export default function ModernCarriersPage() {
       <div className="mb-4 flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <h3 className="text-lg font-bold text-gray-800">
           {activeTab === 'fleet' && 'سجل الأسطول والتقنيات'}
-          {activeTab === 'drivers' && 'سجل السائقين'}
           {activeTab === 'employees' && 'إدارة سجل الموظفين'}
           {activeTab === 'tasks' && 'سجل المهام اليومية'}
           {activeTab === 'trips' && 'سجل حركة الذهاب والعودة'}
@@ -228,14 +221,8 @@ export default function ModernCarriersPage() {
           {activeTab === 'reports' && 'لوحة التقارير الذكية'}
         </h3>
         <div className="flex gap-2">
-           {activeTab === 'fleet' && isAdminMode && (
              <button onClick={() => setShowFleetForm(true)} className="flex items-center gap-2 px-6 py-3 bg-orange-600 text-white rounded-xl font-black hover:bg-orange-700 transition shadow-lg shadow-orange-200 animate-bounce">
                <Plus size={20} /> إضافة شاحنة جديدة
-             </button>
-           )}
-           {activeTab === 'drivers' && isAdminMode && (
-             <button onClick={() => setShowDriverForm(true)} className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
-               <Plus size={18} /> إضافة سائق
              </button>
            )}
            {activeTab === 'attendance' && (
@@ -372,8 +359,6 @@ export default function ModernCarriersPage() {
             </table>
           </div>
         )}
-
-
 
         {data && activeTab === 'employees' && (
           <div className="overflow-auto max-h-[600px] border rounded-lg">
@@ -701,31 +686,7 @@ export default function ModernCarriersPage() {
         </div>
       )}
 
-      {/* Driver Modal */}
-      {showDriverForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" dir="rtl">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold">إضافة سائق جديد</h3>
-              <button onClick={() => setShowDriverForm(false)}><X /></button>
-            </div>
-            <div className="space-y-4">
-              <input placeholder="اسم السائق" className="w-full p-2 border rounded" value={newDriver.name || ''} onChange={e => setNewDriver({...newDriver, name: e.target.value})} />
-              <input placeholder="رقم اللوحة المرتبط بها" className="w-full p-2 border rounded" value={newDriver.plate || ''} onChange={e => setNewDriver({...newDriver, plate: e.target.value})} />
-              <input placeholder="رقم الجوال" className="w-full p-2 border rounded" value={newDriver.phone || ''} onChange={e => setNewDriver({...newDriver, phone: parseInt(e.target.value)})} />
-              <input placeholder="تاريخ انتهاء الرخصة" className="w-full p-2 border rounded" value={newDriver.licenseExpiry || ''} onChange={e => setNewDriver({...newDriver, licenseExpiry: e.target.value})} />
-              <button onClick={() => {
-                const item = { ...newDriver, id: Date.now() } as DriverItem;
-                const updated = [...(data?.drivers || []), item];
-                setData({...data!, drivers: updated});
-                localStorage.setItem('modern_carriers_drivers', JSON.stringify(updated));
-                setShowDriverForm(false);
-                setNewDriver({});
-              }} className="w-full bg-green-600 text-white p-3 rounded-xl font-bold">حفظ السائق</button>
-            </div>
-          </div>
-        </div>
-      )}
+
 
       {showTripForm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" dir="rtl">
@@ -808,7 +769,7 @@ export default function ModernCarriersPage() {
       )}
 
       <div className="mt-8 text-center text-[10px] text-gray-400">
-        نسخة v1.4.1 - توسعة بيانات الأسطول (الفحص، الصيانة، البطاقات)
+        نسخة v1.4.2 - حذف قسم بيانات السائقين وتبسيط الواجهة
       </div>
     </div>
   );
