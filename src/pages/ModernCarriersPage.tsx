@@ -124,8 +124,8 @@ export default function ModernCarriersPage() {
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto animate-in fade-in duration-500 pb-32" dir="rtl">
       {/* Version Banner */}
-      <div className="bg-blue-600 text-white p-2 rounded-lg text-center mb-4 text-xs font-bold animate-pulse">
-        تم تفعيل ميزات الإضافة اليدوية - النسخة v1.4.0
+      <div className="bg-red-600 text-white p-2 rounded-lg text-center mb-4 text-xs font-bold animate-pulse">
+        تم تحديث النظام وحذف قسم السائقين - النسخة v1.4.2 (تحديث: 11:13 مساءً)
       </div>
       {/* Header Area */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
