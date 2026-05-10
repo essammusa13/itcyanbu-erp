@@ -33,10 +33,8 @@ export default function ModernCarriersPage() {
   const [newEmployee, setNewEmployee] = useState<Partial<EmployeeItem>>({});
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [showFleetForm, setShowFleetForm] = useState(false);
-  const [showDriverForm, setShowDriverForm] = useState(false);
   const [newTask, setNewTask] = useState<Partial<TaskItem>>({ status: 'pending' });
   const [newFleet, setNewFleet] = useState<Partial<FleetItem & { sn: string, deviceType: string }>>({});
-  const [newDriver, setNewDriver] = useState<Partial<DriverItem>>({});
   const [showTripForm, setShowTripForm] = useState(false);
   const [newTrip, setNewTrip] = useState<Partial<TripItem>>({ status: 'travelling' });
 
@@ -221,6 +219,7 @@ export default function ModernCarriersPage() {
           {activeTab === 'reports' && 'لوحة التقارير الذكية'}
         </h3>
         <div className="flex gap-2">
+           {activeTab === 'fleet' && isAdminMode && (
              <button onClick={() => setShowFleetForm(true)} className="flex items-center gap-2 px-6 py-3 bg-orange-600 text-white rounded-xl font-black hover:bg-orange-700 transition shadow-lg shadow-orange-200 animate-bounce">
                <Plus size={20} /> إضافة شاحنة جديدة
              </button>
