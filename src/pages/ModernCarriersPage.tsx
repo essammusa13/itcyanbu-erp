@@ -119,6 +119,10 @@ export default function ModernCarriersPage() {
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto animate-in fade-in duration-500 pb-32" dir="rtl">
+      {/* Version Banner */}
+      <div className="bg-blue-600 text-white p-2 rounded-lg text-center mb-4 text-xs font-bold animate-pulse">
+        تم دمج قسم أجهزة التتبع بنجاح داخل الأسطول - النسخة v1.3.9
+      </div>
       {/* Header Area */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
@@ -689,7 +693,7 @@ export default function ModernCarriersPage() {
       )}
 
       <div className="mt-8 text-center text-[10px] text-gray-400">
-        نسخة v1.3.8 - دمج الأسطول والتقنيات + تحسينات التمرير
+        نسخة v1.3.9 - دمج الأسطول والتقنيات + شريط التنبيه
       </div>
     </div>
   );
