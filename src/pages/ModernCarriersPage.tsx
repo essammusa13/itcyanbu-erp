@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Truck, FileText, Users, ExternalLink, Loader2, Lock, Unlock, ClipboardList, Plus, Pencil, Trash2, X, Download, BarChart2, CheckCircle2, Circle, ListTodo, Map, ArrowRightLeft, Clock } from 'lucide-react';
 
-interface FleetItem { id: number; type: string; plate: string; model: number; expiry: string; }
+interface FleetItem { id: number; type: string; plate: string; model: number; expiry: string; periodicInspection?: string; periodicMaintenance?: string; operatingCard?: string; driverCard?: string; aramcoCard?: string; }
 interface CustodyItem { id: number; driverName: string; idNumber: number; type: string; status: string; }
 interface DeviceItem { id: number; plate: string; sn: string; type: string; status: string; }
 interface DriverItem { id: number; name: string; plate: string; licenseExpiry: string; phone: number; }
@@ -292,8 +292,12 @@ export default function ModernCarriersPage() {
                   <th className="p-3">م</th>
                   <th className="p-3">نوع الشاحنة</th>
                   <th className="p-3">اللوحة</th>
-                  <th className="p-3">الموديل</th>
-                  <th className="p-3">انتهاء الاستمارة</th>
+                  <th className="p-3">تجديد الاستمارة</th>
+                  <th className="p-3">الفحص الدوري</th>
+                  <th className="p-3">الصيانة الدورية</th>
+                  <th className="p-3">بطاقة التشغيل</th>
+                  <th className="p-3">بطاقة السائق</th>
+                  <th className="p-3">بطاقة أرامكو</th>
                   <th className="p-3 bg-blue-50">S/N الجهاز</th>
                   <th className="p-3 bg-blue-50">نوع التتبع</th>
                   <th className="p-3 bg-blue-50">حالة الجهاز</th>
@@ -309,6 +313,11 @@ export default function ModernCarriersPage() {
                       <td className="p-3 font-mono">{item.plate}</td>
                       <td className="p-3">{item.model}</td>
                       <td className="p-3 text-red-600 font-bold">{item.expiry}</td>
+                      <td className="p-3 text-xs">{item.periodicInspection || '-'}</td>
+                      <td className="p-3 text-xs">{item.periodicMaintenance || '-'}</td>
+                      <td className="p-3 text-xs">{item.operatingCard || '-'}</td>
+                      <td className="p-3 text-xs">{item.driverCard || '-'}</td>
+                      <td className="p-3 text-xs">{item.aramcoCard || '-'}</td>
                       <td className="p-3 font-mono text-xs text-blue-600">{device?.sn || '-'}</td>
                       <td className="p-3 text-xs">{device?.type || '-'}</td>
                       <td className="p-3 text-xs">
@@ -637,16 +646,42 @@ export default function ModernCarriersPage() {
             </div>
             <div className="space-y-4">
               <input placeholder="نوع الشاحنة" className="w-full p-2 border rounded" value={newFleet.type || ''} onChange={e => setNewFleet({...newFleet, type: e.target.value})} />
-              <input placeholder="رقم اللوحة" className="w-full p-2 border rounded" value={newFleet.plate || ''} onChange={e => setNewFleet({...newFleet, plate: e.target.value})} />
-              <input placeholder="الموديل (سنة)" type="number" className="w-full p-2 border rounded" value={newFleet.model || ''} onChange={e => setNewFleet({...newFleet, model: parseInt(e.target.value)})} />
-              <input placeholder="تاريخ انتهاء الاستمارة" className="w-full p-2 border rounded" value={newFleet.expiry || ''} onChange={e => setNewFleet({...newFleet, expiry: e.target.value})} />
+              <div className="grid grid-cols-2 gap-2">
+                <input placeholder="رقم اللوحة" className="p-2 border rounded" value={newFleet.plate || ''} onChange={e => setNewFleet({...newFleet, plate: e.target.value})} />
+                <input placeholder="الموديل (سنة)" type="number" className="p-2 border rounded" value={newFleet.model || ''} onChange={e => setNewFleet({...newFleet, model: parseInt(e.target.value)})} />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <input placeholder="تجديد الاستمارة" className="p-2 border rounded" value={newFleet.expiry || ''} onChange={e => setNewFleet({...newFleet, expiry: e.target.value})} />
+                <input placeholder="الفحص الدوري" className="p-2 border rounded" value={newFleet.periodicInspection || ''} onChange={e => setNewFleet({...newFleet, periodicInspection: e.target.value})} />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <input placeholder="الصيانة الدورية" className="p-2 border rounded" value={newFleet.periodicMaintenance || ''} onChange={e => setNewFleet({...newFleet, periodicMaintenance: e.target.value})} />
+                <input placeholder="بطاقة التشغيل" className="p-2 border rounded" value={newFleet.operatingCard || ''} onChange={e => setNewFleet({...newFleet, operatingCard: e.target.value})} />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <input placeholder="بطاقة السائق" className="p-2 border rounded" value={newFleet.driverCard || ''} onChange={e => setNewFleet({...newFleet, driverCard: e.target.value})} />
+                <input placeholder="بطاقة أرامكو" className="p-2 border rounded" value={newFleet.aramcoCard || ''} onChange={e => setNewFleet({...newFleet, aramcoCard: e.target.value})} />
+              </div>
               <div className="border-t pt-4 mt-4">
                 <p className="text-xs font-bold text-blue-600 mb-2">بيانات جهاز التتبع (اختياري)</p>
-                <input placeholder="الرقم التسلسلي S/N" className="w-full p-2 border rounded mb-2" value={newFleet.sn || ''} onChange={e => setNewFleet({...newFleet, sn: e.target.value})} />
-                <input placeholder="نوع الجهاز" className="w-full p-2 border rounded" value={newFleet.deviceType || ''} onChange={e => setNewFleet({...newFleet, deviceType: e.target.value})} />
+                <div className="grid grid-cols-2 gap-2">
+                  <input placeholder="S/N الجهاز" className="p-2 border rounded" value={newFleet.sn || ''} onChange={e => setNewFleet({...newFleet, sn: e.target.value})} />
+                  <input placeholder="نوع التتبع" className="p-2 border rounded" value={newFleet.deviceType || ''} onChange={e => setNewFleet({...newFleet, deviceType: e.target.value})} />
+                </div>
               </div>
               <button onClick={() => {
-                const fleetItem = { id: Date.now(), type: newFleet.type, plate: newFleet.plate, model: newFleet.model, expiry: newFleet.expiry } as FleetItem;
+                const fleetItem = { 
+                  id: Date.now(), 
+                  type: newFleet.type, 
+                  plate: newFleet.plate, 
+                  model: newFleet.model, 
+                  expiry: newFleet.expiry,
+                  periodicInspection: newFleet.periodicInspection,
+                  periodicMaintenance: newFleet.periodicMaintenance,
+                  operatingCard: newFleet.operatingCard,
+                  driverCard: newFleet.driverCard,
+                  aramcoCard: newFleet.aramcoCard
+                } as FleetItem;
                 const updatedFleet = [...(data?.fleet || []), fleetItem];
                 
                 let updatedDevices = data?.devices || [];
@@ -773,7 +808,7 @@ export default function ModernCarriersPage() {
       )}
 
       <div className="mt-8 text-center text-[10px] text-gray-400">
-        نسخة v1.4.0 - إضافة ميزة إضافة الشاحنات والسائقين يدوياً
+        نسخة v1.4.1 - توسعة بيانات الأسطول (الفحص، الصيانة، البطاقات)
       </div>
     </div>
   );
