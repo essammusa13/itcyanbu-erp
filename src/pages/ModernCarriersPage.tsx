@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Truck, FileText, Users, ExternalLink, Loader2, Lock, Unlock, ClipboardList, Plus, Pencil, Trash2, X, Download, BarChart2, CheckCircle2, Circle, ListTodo, Map, ArrowRightLeft, Clock } from 'lucide-react';
+import { Truck, FileText, Users, ExternalLink, Loader2, Lock, Unlock, ClipboardList, Plus, Pencil, Trash2, X, Download, BarChart2, CheckCircle2, Circle, ListTodo, Map, ArrowRightLeft, Clock, Bell, MessageCircle } from 'lucide-react';
 
 interface FleetItem { id: number; type: string; plate: string; model: number; expiry: string; periodicInspection?: string; periodicMaintenance?: string; operatingCard?: string; driverCard?: string; aramcoCard?: string; }
 interface CustodyItem { id: number; driverName: string; idNumber: number; type: string; status: string; }
@@ -35,6 +35,71 @@ export default function ModernCarriersPage() {
   const [newFleet, setNewFleet] = useState<Partial<FleetItem & { sn: string, deviceType: string }>>({});
   const [showTripForm, setShowTripForm] = useState(false);
   const [newTrip, setNewTrip] = useState<Partial<TripItem>>({ status: 'travelling' });
+  const [showAlerts, setShowAlerts] = useState(false);
+
+  const checkExpiry = (dateStr?: string) => {
+    if (!dateStr || dateStr === '-') return { isExpiring: false, days: 999 };
+    try {
+      const expiryDate = new Date(dateStr);
+      if (isNaN(expiryDate.getTime())) return { isExpiring: false, days: 999 };
+      const today = new Date();
+      const diffTime = expiryDate.getTime() - today.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      return { isExpiring: diffDays <= 30, days: diffDays };
+    } catch {
+      return { isExpiring: false, days: 999 };
+    }
+  };
+
+  const getAlerts = () => {
+    if (!data) return [];
+    const alerts: any[] = [];
+    
+    data.fleet.forEach(f => {
+      const fields = [
+        { label: 'استمارة', date: f.expiry },
+        { label: 'فحص دوري', date: f.periodicInspection },
+        { label: 'صيانة', date: f.periodicMaintenance },
+        { label: 'بطاقة تشغيل', date: f.operatingCard },
+        { label: 'بطاقة أرامكو', date: f.aramcoCard }
+      ];
+      fields.forEach(field => {
+        const check = checkExpiry(field.date);
+        if (check.isExpiring) {
+          alerts.push({ name: `شاحنة ${f.plate}`, type: field.label, date: field.date, days: check.days });
+        }
+      });
+    });
+
+    data.employees.forEach(e => {
+      const fields = [
+        { label: 'هوية', date: e.idExpiry },
+        { label: 'جواز', date: e.passportExpiry },
+        { label: 'تأمين صحي', date: e.healthInsuranceExpiry },
+        { label: 'رخصة', date: e.licenseExpiry }
+      ];
+      fields.forEach(field => {
+        const check = checkExpiry(field.date);
+        if (check.isExpiring) {
+          alerts.push({ name: `الموظف ${e.name}`, type: field.label, date: field.date, days: check.days });
+        }
+      });
+    });
+
+    return alerts.sort((a, b) => a.days - b.days);
+  };
+
+  const sendWhatsAppAlerts = () => {
+    const alerts = getAlerts();
+    if (alerts.length === 0) return alert('لا توجد تنبيهات حالياً');
+    const phone = "966545450613";
+    let message = "*تقرير تنبيهات التجديد - مؤسسة نواقل الحديثة*\n\n";
+    alerts.forEach(a => {
+      const status = a.days < 0 ? "⚠️ منتهي" : `⏳ ينتهي خلال ${a.days} يوم`;
+      message += `• *${a.name}*\n  ← ${a.type}: ${a.date} (${status})\n\n`;
+    });
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
+  };
 
   useEffect(() => {
     fetch('/data/nwagl.json')
@@ -130,6 +195,17 @@ export default function ModernCarriersPage() {
           <p className="text-gray-500">لوحة التقارير والتتبع الذكية</p>
         </div>
         <div className="flex items-center gap-3">
+          <button 
+            onClick={() => setShowAlerts(true)}
+            className="relative p-2.5 bg-white rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 transition shadow-sm"
+          >
+            <Bell size={22} />
+            {getAlerts().length > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white shadow-sm">
+                {getAlerts().length}
+              </span>
+            )}
+          </button>
           <button 
             onClick={() => {
               if (!isAdminMode) {
@@ -296,12 +372,12 @@ export default function ModernCarriersPage() {
                       <td className="p-3 font-semibold">{item.type}</td>
                       <td className="p-3 font-mono">{item.plate}</td>
                       <td className="p-3">{item.model}</td>
-                      <td className="p-3 text-red-600 font-bold">{item.expiry}</td>
-                      <td className="p-3 text-xs">{item.periodicInspection || '-'}</td>
-                      <td className="p-3 text-xs">{item.periodicMaintenance || '-'}</td>
-                      <td className="p-3 text-xs">{item.operatingCard || '-'}</td>
-                      <td className="p-3 text-xs">{item.driverCard || '-'}</td>
-                      <td className="p-3 text-xs">{item.aramcoCard || '-'}</td>
+                      <td className={`p-3 text-red-600 font-bold ${checkExpiry(item.expiry).isExpiring ? 'animate-pulse bg-red-50' : ''}`}>{item.expiry}</td>
+                      <td className={`p-3 text-xs ${checkExpiry(item.periodicInspection).isExpiring ? 'text-red-600 font-bold' : ''}`}>{item.periodicInspection || '-'}</td>
+                      <td className={`p-3 text-xs ${checkExpiry(item.periodicMaintenance).isExpiring ? 'text-red-600 font-bold' : ''}`}>{item.periodicMaintenance || '-'}</td>
+                      <td className={`p-3 text-xs ${checkExpiry(item.operatingCard).isExpiring ? 'text-red-600 font-bold' : ''}`}>{item.operatingCard || '-'}</td>
+                      <td className={`p-3 text-xs ${checkExpiry(item.driverCard).isExpiring ? 'text-red-600 font-bold' : ''}`}>{item.driverCard || '-'}</td>
+                      <td className={`p-3 text-xs ${checkExpiry(item.aramcoCard).isExpiring ? 'text-red-600 font-bold' : ''}`}>{item.aramcoCard || '-'}</td>
                       <td className="p-3 font-mono text-xs text-blue-600">{device?.sn || '-'}</td>
                       <td className="p-3 text-xs">{device?.type || '-'}</td>
                       <td className="p-3 text-xs">
@@ -351,10 +427,10 @@ export default function ModernCarriersPage() {
                     <td className="p-3">{item.idNumber}</td>
                      <td className="p-3 text-xs">{item.license}</td>
                     <td className="p-3 text-[10px] font-mono" dir="ltr">{item.phone}</td>
-                    <td className="p-3 font-medium text-orange-600">{item.idExpiry}</td>
-                    <td className="p-3 text-xs">{item.passportExpiry || '-'}</td>
-                    <td className="p-3 text-xs">{item.healthInsuranceExpiry || '-'}</td>
-                    <td className="p-3">{item.licenseExpiry}</td>
+                    <td className={`p-3 font-medium ${checkExpiry(item.idExpiry).isExpiring ? 'text-red-600 animate-pulse' : 'text-orange-600'}`}>{item.idExpiry}</td>
+                    <td className={`p-3 text-xs ${checkExpiry(item.passportExpiry).isExpiring ? 'text-red-600 font-bold' : ''}`}>{item.passportExpiry || '-'}</td>
+                    <td className={`p-3 text-xs ${checkExpiry(item.healthInsuranceExpiry).isExpiring ? 'text-red-600 font-bold' : ''}`}>{item.healthInsuranceExpiry || '-'}</td>
+                    <td className={`p-3 text-xs ${checkExpiry(item.licenseExpiry).isExpiring ? 'text-red-600 font-bold' : ''}`}>{item.licenseExpiry}</td>
                     <td className="p-3">
                       <div className="flex gap-1">
                         {(() => {
@@ -752,8 +828,57 @@ export default function ModernCarriersPage() {
         </div>
       )}
 
+      {showAlerts && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[100] p-4" dir="rtl">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in duration-200">
+            <div className="bg-red-600 p-6 text-white flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <Bell size={24} className="animate-bounce" />
+                <div>
+                  <h3 className="text-xl font-bold">تنبيهات التجديد الحرجة</h3>
+                  <p className="text-red-100 text-xs">المستندات التي تنتهي خلال 30 يوماً أو أقل</p>
+                </div>
+              </div>
+              <button onClick={() => setShowAlerts(false)} className="hover:bg-red-700 p-1 rounded-lg transition"><X /></button>
+            </div>
+            <div className="p-4 max-h-[60vh] overflow-auto">
+              {getAlerts().length === 0 ? (
+                <div className="text-center py-12 text-gray-400">
+                  <CheckCircle2 size={48} className="mx-auto mb-4 text-green-500 opacity-20" />
+                  <p>لا توجد تنبيهات تجديد حالياً</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {getAlerts().map((alert, idx) => (
+                    <div key={idx} className={`p-4 rounded-xl border flex justify-between items-center ${alert.days < 0 ? 'bg-red-50 border-red-100' : 'bg-orange-50 border-orange-100'}`}>
+                      <div>
+                        <div className="font-black text-gray-900">{alert.name}</div>
+                        <div className="text-sm text-gray-600">{alert.type}: <span className="font-mono">{alert.date}</span></div>
+                      </div>
+                      <div className={`text-xs font-bold px-3 py-1 rounded-full ${alert.days < 0 ? 'bg-red-600 text-white' : 'bg-orange-600 text-white'}`}>
+                        {alert.days < 0 ? 'منتهي' : `خلال ${alert.days} يوم`}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="p-6 bg-gray-50 border-t flex flex-col gap-3">
+              <button 
+                onClick={sendWhatsAppAlerts}
+                className="w-full flex items-center justify-center gap-3 bg-green-600 text-white p-4 rounded-xl font-bold hover:bg-green-700 transition shadow-lg shadow-green-200"
+              >
+                <MessageCircle size={20} />
+                إرسال التقرير عبر الواتساب
+              </button>
+              <p className="text-[10px] text-gray-400 text-center">سيتم إرسال التقرير إلى الرقم: +966545450613</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="mt-8 text-center text-[10px] text-gray-400">
-        نسخة v1.4.4 - استقرار النظام وتحديث شامل للبيانات
+        نسخة v1.4.5 - تفعيل نظام تنبيهات التجديد والواتساب
       </div>
     </div>
   );
