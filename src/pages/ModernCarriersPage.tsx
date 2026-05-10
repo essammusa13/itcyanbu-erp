@@ -125,7 +125,7 @@ export default function ModernCarriersPage() {
     <div className="p-4 md:p-8 max-w-7xl mx-auto animate-in fade-in duration-500 pb-32" dir="rtl">
       {/* Version Banner */}
       <div className="bg-blue-600 text-white p-2 rounded-lg text-center mb-4 text-xs font-bold animate-pulse">
-        تم دمج قسم أجهزة التتبع بنجاح داخل الأسطول - النسخة v1.3.9
+        تم تفعيل ميزات الإضافة اليدوية - النسخة v1.4.0
       </div>
       {/* Header Area */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
@@ -229,8 +229,8 @@ export default function ModernCarriersPage() {
         </h3>
         <div className="flex gap-2">
            {activeTab === 'fleet' && isAdminMode && (
-             <button onClick={() => setShowFleetForm(true)} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-               <Plus size={18} /> إضافة شاحنة
+             <button onClick={() => setShowFleetForm(true)} className="flex items-center gap-2 px-6 py-3 bg-orange-600 text-white rounded-xl font-black hover:bg-orange-700 transition shadow-lg shadow-orange-200 animate-bounce">
+               <Plus size={20} /> إضافة شاحنة جديدة
              </button>
            )}
            {activeTab === 'drivers' && isAdminMode && (
