@@ -162,7 +162,7 @@ export default function ModernCarriersPage() {
           onClick={() => setActiveTab('fleet')}
           className={`flex items-center gap-2 px-4 py-2 rounded-t-lg transition whitespace-nowrap ${activeTab === 'fleet' ? 'bg-white text-blue-600 border-b-2 border-blue-600 font-bold' : 'text-gray-600 hover:bg-gray-200'}`}
         >
-          <Truck size={18} /> اسطول الشاحنات والمقطورات
+          <Truck size={18} /> أسطول الشاحنات وأجهزة التتبع
         </button>
         <button 
           onClick={() => setActiveTab('drivers')}
@@ -211,10 +211,7 @@ export default function ModernCarriersPage() {
       {/* Toolbar Area */}
       <div className="mb-4 flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <h3 className="text-lg font-bold text-gray-800">
-          {activeTab === 'fleet' && 'قائمة الشاحنات'}
-          {activeTab === 'drivers' && 'سجل السائقين'}
-          {activeTab === 'custody' && 'سجل العهد'}
-          {activeTab === 'devices' && 'قائمة أجهزة التتبع'}
+          {activeTab === 'fleet' && 'سجل الأسطول والتقنيات'}
           {activeTab === 'employees' && 'إدارة سجل الموظفين'}
           {activeTab === 'tasks' && 'سجل المهام اليومية'}
           {activeTab === 'trips' && 'سجل حركة الذهاب والعودة'}
@@ -692,7 +689,7 @@ export default function ModernCarriersPage() {
       )}
 
       <div className="mt-8 text-center text-[10px] text-gray-400">
-        نسخة v1.3.7 - دمج بيانات أجهزة التتبع مع أسطول الشاحنات
+        نسخة v1.3.8 - دمج الأسطول والتقنيات + تحسينات التمرير
       </div>
     </div>
   );
