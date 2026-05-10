@@ -41,7 +41,7 @@ function App() {
   const [activeModule, setActiveModule] = useState(window.location.search.includes('tour') ? 'Property Tour' : 'Contacts');
   const { user, isSupabaseEnabled, loading } = useAuth();
 
-  console.log('--- System Version v1.2.5 Loaded ---');
+  console.log('--- System Version v1.3.9 Loaded ---'); // Force Rebuild 1
 
   if (loading) {
     return (

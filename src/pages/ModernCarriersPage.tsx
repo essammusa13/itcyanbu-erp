@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Truck, Navigation, FileText, Users, ExternalLink, Loader2, Lock, Unlock, ClipboardList, Plus, Pencil, Trash2, X, Download, BarChart2, CheckCircle2, Circle, ListTodo, Map, ArrowRightLeft, Clock } from 'lucide-react';
+import { Truck, FileText, Users, ExternalLink, Loader2, Lock, Unlock, ClipboardList, Plus, Pencil, Trash2, X, Download, BarChart2, CheckCircle2, Circle, ListTodo, Map, ArrowRightLeft, Clock } from 'lucide-react';
 
 interface FleetItem { id: number; type: string; plate: string; model: number; expiry: string; }
 interface CustodyItem { id: number; driverName: string; idNumber: number; type: string; status: string; }
