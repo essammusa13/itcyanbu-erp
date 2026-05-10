@@ -177,12 +177,6 @@ export default function ModernCarriersPage() {
           <FileText size={18} /> العهد والمعدات
         </button>
         <button 
-          onClick={() => setActiveTab('devices')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-t-lg transition whitespace-nowrap ${activeTab === 'devices' ? 'bg-white text-blue-600 border-b-2 border-blue-600 font-bold' : 'text-gray-600 hover:bg-gray-200'}`}
-        >
-          <Navigation size={18} /> أجهزة التتبع والتقنيات
-        </button>
-        <button 
           onClick={() => setActiveTab('employees')}
           className={`flex items-center gap-2 px-4 py-2 rounded-t-lg transition whitespace-nowrap ${activeTab === 'employees' ? 'bg-white text-blue-600 border-b-2 border-blue-600 font-bold' : 'text-gray-600 hover:bg-gray-200'}`}
         >
@@ -275,7 +269,43 @@ export default function ModernCarriersPage() {
       {/* Main Content Area */}
       <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 min-h-[400px]">
         {data && activeTab === 'fleet' && (
-          <div className="overflow-auto max-h-[600px] border rounded-lg"><table className="w-full text-right"><thead><tr className="bg-gray-50 border-b"><th className="p-3">م</th><th className="p-3">النوع</th><th className="p-3">اللوحة</th><th className="p-3">الموديل</th><th className="p-3">انتهاء الاستمارة</th></tr></thead><tbody>{data.fleet.map((item, i) => (<tr key={i} className="border-b hover:bg-gray-50"><td className="p-3">{item.id}</td><td className="p-3 font-semibold">{item.type}</td><td className="p-3 font-mono">{item.plate}</td><td className="p-3">{item.model}</td><td className="p-3 text-red-600 font-bold">{item.expiry}</td></tr>))}</tbody></table></div>
+          <div className="overflow-auto max-h-[600px] border rounded-lg">
+            <table className="w-full text-right">
+              <thead>
+                <tr className="bg-gray-50 border-b">
+                  <th className="p-3">م</th>
+                  <th className="p-3">نوع الشاحنة</th>
+                  <th className="p-3">اللوحة</th>
+                  <th className="p-3">الموديل</th>
+                  <th className="p-3">انتهاء الاستمارة</th>
+                  <th className="p-3 bg-blue-50">S/N الجهاز</th>
+                  <th className="p-3 bg-blue-50">نوع التتبع</th>
+                  <th className="p-3 bg-blue-50">حالة الجهاز</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.fleet.map((item, i) => {
+                  const device = data.devices.find(d => d.plate === item.plate);
+                  return (
+                    <tr key={i} className="border-b hover:bg-gray-50">
+                      <td className="p-3">{item.id}</td>
+                      <td className="p-3 font-semibold">{item.type}</td>
+                      <td className="p-3 font-mono">{item.plate}</td>
+                      <td className="p-3">{item.model}</td>
+                      <td className="p-3 text-red-600 font-bold">{item.expiry}</td>
+                      <td className="p-3 font-mono text-xs text-blue-600">{device?.sn || '-'}</td>
+                      <td className="p-3 text-xs">{device?.type || '-'}</td>
+                      <td className="p-3 text-xs">
+                        {device ? (
+                          <span className="text-green-600 font-bold">{device.status}</span>
+                        ) : '-'}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
 
         {data && activeTab === 'drivers' && (
@@ -318,24 +348,7 @@ export default function ModernCarriersPage() {
           </div>
         )}
 
-        {data && activeTab === 'devices' && (
-          <div className="overflow-auto max-h-[600px] border rounded-lg">
-            <table className="w-full text-right">
-              <thead><tr className="bg-gray-50 border-b"><th className="p-3">م</th><th className="p-3">اللوحة</th><th className="p-3">الرقم التسلسلي S/N</th><th className="p-3">النوع</th><th className="p-3">الحالة</th></tr></thead>
-              <tbody>
-                {data.devices.map((item, i) => (
-                  <tr key={i} className="border-b hover:bg-gray-50">
-                    <td className="p-3">{item.id}</td>
-                    <td className="p-3 font-bold font-mono">{item.plate}</td>
-                    <td className="p-3 font-mono text-xs">{item.sn}</td>
-                    <td className="p-3">{item.type}</td>
-                    <td className="p-3 text-green-600 font-bold">{item.status}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+
 
         {data && activeTab === 'employees' && (
           <div className="overflow-auto max-h-[600px] border rounded-lg">
@@ -679,7 +692,7 @@ export default function ModernCarriersPage() {
       )}
 
       <div className="mt-8 text-center text-[10px] text-gray-400">
-        نسخة v1.3.6 - تحديث المسمى الرسمي والواجهة
+        نسخة v1.3.7 - دمج بيانات أجهزة التتبع مع أسطول الشاحنات
       </div>
     </div>
   );
