@@ -32,7 +32,11 @@ export default function ModernCarriersPage() {
   const [editingItem, setEditingItem] = useState<EmployeeItem | null>(null);
   const [newEmployee, setNewEmployee] = useState<Partial<EmployeeItem>>({});
   const [showTaskForm, setShowTaskForm] = useState(false);
+  const [showFleetForm, setShowFleetForm] = useState(false);
+  const [showDriverForm, setShowDriverForm] = useState(false);
   const [newTask, setNewTask] = useState<Partial<TaskItem>>({ status: 'pending' });
+  const [newFleet, setNewFleet] = useState<Partial<FleetItem & { sn: string, deviceType: string }>>({});
+  const [newDriver, setNewDriver] = useState<Partial<DriverItem>>({});
   const [showTripForm, setShowTripForm] = useState(false);
   const [newTrip, setNewTrip] = useState<Partial<TripItem>>({ status: 'travelling' });
 
@@ -216,6 +220,7 @@ export default function ModernCarriersPage() {
       <div className="mb-4 flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <h3 className="text-lg font-bold text-gray-800">
           {activeTab === 'fleet' && 'سجل الأسطول والتقنيات'}
+          {activeTab === 'drivers' && 'سجل السائقين'}
           {activeTab === 'employees' && 'إدارة سجل الموظفين'}
           {activeTab === 'tasks' && 'سجل المهام اليومية'}
           {activeTab === 'trips' && 'سجل حركة الذهاب والعودة'}
@@ -223,6 +228,16 @@ export default function ModernCarriersPage() {
           {activeTab === 'reports' && 'لوحة التقارير الذكية'}
         </h3>
         <div className="flex gap-2">
+           {activeTab === 'fleet' && isAdminMode && (
+             <button onClick={() => setShowFleetForm(true)} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+               <Plus size={18} /> إضافة شاحنة
+             </button>
+           )}
+           {activeTab === 'drivers' && isAdminMode && (
+             <button onClick={() => setShowDriverForm(true)} className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+               <Plus size={18} /> إضافة سائق
+             </button>
+           )}
            {activeTab === 'attendance' && (
               <button onClick={() => {
                 const tableData = data?.attendance || [];
@@ -612,6 +627,71 @@ export default function ModernCarriersPage() {
       </div>
 
       {/* Modals */}
+      {/* Fleet Modal */}
+      {showFleetForm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" dir="rtl">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold">إضافة شاحنة جديدة</h3>
+              <button onClick={() => setShowFleetForm(false)}><X /></button>
+            </div>
+            <div className="space-y-4">
+              <input placeholder="نوع الشاحنة" className="w-full p-2 border rounded" value={newFleet.type || ''} onChange={e => setNewFleet({...newFleet, type: e.target.value})} />
+              <input placeholder="رقم اللوحة" className="w-full p-2 border rounded" value={newFleet.plate || ''} onChange={e => setNewFleet({...newFleet, plate: e.target.value})} />
+              <input placeholder="الموديل (سنة)" type="number" className="w-full p-2 border rounded" value={newFleet.model || ''} onChange={e => setNewFleet({...newFleet, model: parseInt(e.target.value)})} />
+              <input placeholder="تاريخ انتهاء الاستمارة" className="w-full p-2 border rounded" value={newFleet.expiry || ''} onChange={e => setNewFleet({...newFleet, expiry: e.target.value})} />
+              <div className="border-t pt-4 mt-4">
+                <p className="text-xs font-bold text-blue-600 mb-2">بيانات جهاز التتبع (اختياري)</p>
+                <input placeholder="الرقم التسلسلي S/N" className="w-full p-2 border rounded mb-2" value={newFleet.sn || ''} onChange={e => setNewFleet({...newFleet, sn: e.target.value})} />
+                <input placeholder="نوع الجهاز" className="w-full p-2 border rounded" value={newFleet.deviceType || ''} onChange={e => setNewFleet({...newFleet, deviceType: e.target.value})} />
+              </div>
+              <button onClick={() => {
+                const fleetItem = { id: Date.now(), type: newFleet.type, plate: newFleet.plate, model: newFleet.model, expiry: newFleet.expiry } as FleetItem;
+                const updatedFleet = [...(data?.fleet || []), fleetItem];
+                
+                let updatedDevices = data?.devices || [];
+                if (newFleet.sn) {
+                  const deviceItem = { id: Date.now() + 1, plate: newFleet.plate, sn: newFleet.sn, type: newFleet.deviceType || 'GPS', status: 'فعال' } as DeviceItem;
+                  updatedDevices = [...updatedDevices, deviceItem];
+                }
+
+                setData({...data!, fleet: updatedFleet, devices: updatedDevices});
+                localStorage.setItem('modern_carriers_fleet', JSON.stringify(updatedFleet));
+                localStorage.setItem('modern_carriers_devices', JSON.stringify(updatedDevices));
+                setShowFleetForm(false);
+                setNewFleet({});
+              }} className="w-full bg-blue-600 text-white p-3 rounded-xl font-bold">حفظ البيانات</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Driver Modal */}
+      {showDriverForm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" dir="rtl">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold">إضافة سائق جديد</h3>
+              <button onClick={() => setShowDriverForm(false)}><X /></button>
+            </div>
+            <div className="space-y-4">
+              <input placeholder="اسم السائق" className="w-full p-2 border rounded" value={newDriver.name || ''} onChange={e => setNewDriver({...newDriver, name: e.target.value})} />
+              <input placeholder="رقم اللوحة المرتبط بها" className="w-full p-2 border rounded" value={newDriver.plate || ''} onChange={e => setNewDriver({...newDriver, plate: e.target.value})} />
+              <input placeholder="رقم الجوال" className="w-full p-2 border rounded" value={newDriver.phone || ''} onChange={e => setNewDriver({...newDriver, phone: parseInt(e.target.value)})} />
+              <input placeholder="تاريخ انتهاء الرخصة" className="w-full p-2 border rounded" value={newDriver.licenseExpiry || ''} onChange={e => setNewDriver({...newDriver, licenseExpiry: e.target.value})} />
+              <button onClick={() => {
+                const item = { ...newDriver, id: Date.now() } as DriverItem;
+                const updated = [...(data?.drivers || []), item];
+                setData({...data!, drivers: updated});
+                localStorage.setItem('modern_carriers_drivers', JSON.stringify(updated));
+                setShowDriverForm(false);
+                setNewDriver({});
+              }} className="w-full bg-green-600 text-white p-3 rounded-xl font-bold">حفظ السائق</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showTripForm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" dir="rtl">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
@@ -693,7 +773,7 @@ export default function ModernCarriersPage() {
       )}
 
       <div className="mt-8 text-center text-[10px] text-gray-400">
-        نسخة v1.3.9 - دمج الأسطول والتقنيات + شريط التنبيه
+        نسخة v1.4.0 - إضافة ميزة إضافة الشاحنات والسائقين يدوياً
       </div>
     </div>
   );
