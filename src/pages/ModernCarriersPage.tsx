@@ -4,7 +4,6 @@ import { Truck, FileText, Users, ExternalLink, Loader2, Lock, Unlock, ClipboardL
 interface FleetItem { id: number; type: string; plate: string; model: number; expiry: string; periodicInspection?: string; periodicMaintenance?: string; operatingCard?: string; driverCard?: string; aramcoCard?: string; }
 interface CustodyItem { id: number; driverName: string; idNumber: number; type: string; status: string; }
 interface DeviceItem { id: number; plate: string; sn: string; type: string; status: string; }
-interface DriverItem { id: number; name: string; plate: string; licenseExpiry: string; phone: number; }
 interface EmployeeItem { id: number; name: string; idNumber: number; license: string; phone: string; idExpiry: string; licenseExpiry: string; profession?: string; passportExpiry?: string; healthInsuranceExpiry?: string; }
 interface TaskItem { id: number; title: string; assignedTo: string; status: 'completed' | 'pending' | 'in-progress'; date: string; }
 interface TripItem { id: number; truck: string; driver: string; destination: string; departureDate: string; returnDate?: string; status: 'travelling' | 'returned'; }
