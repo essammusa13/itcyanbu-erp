@@ -19,7 +19,6 @@ export default function ModernCarriersPage() {
     fleet: FleetItem[];
     custody: CustodyItem[];
     devices: DeviceItem[];
-    drivers: DriverItem[];
     employees: EmployeeItem[];
     tasks: TaskItem[];
     trips: TripItem[];
@@ -122,8 +121,8 @@ export default function ModernCarriersPage() {
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto animate-in fade-in duration-500 pb-32" dir="rtl">
       {/* Version Banner */}
-      <div className="bg-blue-600 text-white p-2 rounded-lg text-center mb-4 text-xs font-bold animate-pulse">
-        تمت إضافة أعمدة بيانات الموظفين الجديدة - النسخة v1.4.3
+      <div className="bg-blue-600 text-white p-2 rounded-lg text-center mb-4 text-xs font-bold shadow-lg">
+        تحديث شامل: حذف السائقين وتوسعة بيانات الموظفين والأسطول - النسخة v1.4.4
       </div>
       {/* Header Area */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
@@ -314,25 +313,6 @@ export default function ModernCarriersPage() {
                     </tr>
                   );
                 })}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {data && activeTab === 'drivers' && (
-          <div className="overflow-auto max-h-[600px] border rounded-lg">
-            <table className="w-full text-right">
-              <thead><tr className="bg-gray-50 border-b"><th className="p-3">م</th><th className="p-3">الاسم</th><th className="p-3">اللوحة</th><th className="p-3">رقم الجوال</th><th className="p-3">انتهاء الرخصة</th></tr></thead>
-              <tbody>
-                {data.drivers.map((item, i) => (
-                  <tr key={i} className="border-b hover:bg-gray-50">
-                    <td className="p-3">{item.id}</td>
-                    <td className="p-3 font-bold">{item.name}</td>
-                    <td className="p-3 font-mono">{item.plate}</td>
-                    <td className="p-3" dir="ltr">{item.phone}</td>
-                    <td className="p-3 text-red-600">{item.licenseExpiry}</td>
-                  </tr>
-                ))}
               </tbody>
             </table>
           </div>
@@ -774,7 +754,7 @@ export default function ModernCarriersPage() {
       )}
 
       <div className="mt-8 text-center text-[10px] text-gray-400">
-        نسخة v1.4.3 - إضافة أعمدة الجواز والتأمين الصحي للموظفين
+        نسخة v1.4.4 - استقرار النظام وتحديث شامل للبيانات
       </div>
     </div>
   );
