@@ -39,6 +39,8 @@ export default function ModernCarriersPage() {
   const [showSettings, setShowSettings] = useState(false);
   const [callmebotApiKey, setCallmebotApiKey] = useState(() => localStorage.getItem('callmebot_api_key') || '');
   const [callmebotKeyInput, setCallmebotKeyInput] = useState('');
+  const [ntfyTopic, setNtfyTopic] = useState(() => localStorage.getItem('ntfy_topic') || '');
+  const [ntfyTopicInput, setNtfyTopicInput] = useState('');
 
   const checkExpiry = (dateStr?: string) => {
     if (!dateStr || dateStr === '-') return { isExpiring: false, days: 999 };
@@ -258,11 +260,37 @@ export default function ModernCarriersPage() {
             if (Notification.permission === 'granted') doNotify();
             else if (Notification.permission !== 'denied') Notification.requestPermission().then(p => { if (p === 'granted') doNotify(); });
           }
+          const todayStr = new Date().toLocaleDateString('sv-SE');
 
-          // 2️⃣ CallMeBot (مرة يومية فقط)
+          // 2️⃣ ntfy.sh (إشعار فوري على الهاتف - مرة يومية)
+          const ntfyT = localStorage.getItem('ntfy_topic');
+          const ntfyLastSent = localStorage.getItem('ntfy_last_sent');
+          const todayStr = new Date().toLocaleDateString('sv-SE');
+          if (ntfyT && ntfyLastSent !== todayStr && tempAlerts.length > 0) {
+            const topAlert = tempAlerts[0];
+            const body = `يوجد ${tempAlerts.length} مستند تجديد قريب الانتهاء\n\n` +
+              tempAlerts.map((a, i) => {
+                const ic = a.days < 0 ? '🔴' : a.days <= 7 ? '🟠' : '🟡';
+                return `${ic} ${a.name} | ${a.type}: ${a.days < 0 ? 'منتهي' : `خلال ${a.days} يوم`}`;
+              }).join('\n');
+            fetch(`https://ntfy.sh/${ntfyT}`, {
+              method: 'POST',
+              headers: {
+                'Title': '🚛 تنبيه نواقل الحديثة',
+                'Priority': topAlert.days <= 7 ? 'urgent' : 'high',
+                'Tags': 'warning,truck,rotating_light',
+                'Content-Type': 'text/plain; charset=utf-8'
+              },
+              body
+            })
+            .then(() => localStorage.setItem('ntfy_last_sent', todayStr))
+            .catch(() => {});
+          }
+
+          // 3️⃣ CallMeBot (واتساب - مرة يومية)
           const apiKey = localStorage.getItem('callmebot_api_key');
           const lastSent = localStorage.getItem('callmebot_last_sent');
-          const todayStr = new Date().toLocaleDateString('sv-SE');
+      
           if (apiKey && lastSent !== todayStr && tempAlerts.length > 0) {
             const phone = '966545450613';
             let msg = `🚛 *تنبيهات نواقل الحديثة*\n📅 ${todayStr}\n${'─'.repeat(25)}\n\n⚠️ *${tempAlerts.length} تنبيه:*\n\n`;
