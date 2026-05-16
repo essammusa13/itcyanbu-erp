@@ -16,10 +16,16 @@
     },
     {
       "id": 3,
-      "type": "راس تريلة مرسيدس",
-      "plate": "9095 أ أ ر",
+      "type": "صهريج",
+      "plate": "9095",
+      "driver": "احمد",
       "model": 2015,
-      "expiry": "2-5-1448"
+      "expiry": "2026-06-01",
+      "periodicInspection": "2026-07-01",
+      "periodicMaintenance": "كل 3 اشهر",
+      "operatingCard": "2026-06-01",
+      "driverCard": "2026-06-01",
+      "aramcoCard": "2026-06-01"
     },
     {
       "id": 4,

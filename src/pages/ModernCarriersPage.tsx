@@ -352,6 +352,7 @@ export default function ModernCarriersPage() {
                   <th className="p-3">م</th>
                   <th className="p-3">نوع الشاحنة</th>
                   <th className="p-3">اللوحة</th>
+                  <th className="p-3">السائق</th>
                   <th className="p-3">تجديد الاستمارة</th>
                   <th className="p-3">الفحص الدوري</th>
                   <th className="p-3">الصيانة الدورية</th>
@@ -371,10 +372,10 @@ export default function ModernCarriersPage() {
                       <td className="p-3">{item.id}</td>
                       <td className="p-3 font-semibold">{item.type}</td>
                       <td className="p-3 font-mono">{item.plate}</td>
-                      <td className="p-3">{item.model}</td>
-                      <td className={`p-3 text-red-600 font-bold ${checkExpiry(item.expiry).isExpiring ? 'animate-pulse bg-red-50' : ''}`}>{item.expiry}</td>
+                      <td className="p-3">{(item as any).driver || '-'}</td>
+                      <td className={`p-3 text-xs ${checkExpiry(item.expiry).isExpiring ? 'text-red-600 font-bold animate-pulse bg-red-50' : ''}`}>{item.expiry || '-'}</td>
                       <td className={`p-3 text-xs ${checkExpiry(item.periodicInspection).isExpiring ? 'text-red-600 font-bold' : ''}`}>{item.periodicInspection || '-'}</td>
-                      <td className={`p-3 text-xs ${checkExpiry(item.periodicMaintenance).isExpiring ? 'text-red-600 font-bold' : ''}`}>{item.periodicMaintenance || '-'}</td>
+                      <td className="p-3 text-xs">{item.periodicMaintenance || '-'}</td>
                       <td className={`p-3 text-xs ${checkExpiry(item.operatingCard).isExpiring ? 'text-red-600 font-bold' : ''}`}>{item.operatingCard || '-'}</td>
                       <td className={`p-3 text-xs ${checkExpiry(item.driverCard).isExpiring ? 'text-red-600 font-bold' : ''}`}>{item.driverCard || '-'}</td>
                       <td className={`p-3 text-xs ${checkExpiry(item.aramcoCard).isExpiring ? 'text-red-600 font-bold' : ''}`}>{item.aramcoCard || '-'}</td>
