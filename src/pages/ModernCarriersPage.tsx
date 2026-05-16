@@ -91,13 +91,21 @@ export default function ModernCarriersPage() {
 
   const sendWhatsAppAlerts = () => {
     const alerts = getAlerts();
-    if (alerts.length === 0) return alert('لا توجد تنبيهات حالياً');
     const phone = "966545450613";
-    let message = "*تقرير تنبيهات التجديد - مؤسسة نواقل الحديثة*\n\n";
-    alerts.forEach(a => {
-      const status = a.days < 0 ? "⚠️ منتهي" : `⏳ ينتهي خلال ${a.days} يوم`;
-      message += `• *${a.name}*\n  ← ${a.type}: ${a.date} (${status})\n\n`;
-    });
+    const today = new Date().toLocaleDateString('ar-SA', { year: 'numeric', month: 'long', day: 'numeric' });
+    let message = `🚛 *تقرير تنبيهات التجديد*\n*مؤسسة نواقل الحديثة للنقليات*\n📅 ${today}\n`;
+    message += `${'─'.repeat(30)}\n\n`;
+    if (alerts.length === 0) {
+      message += '✅ لا توجد مستندات قريبة الانتهاء حالياً';
+    } else {
+      message += `⚠️ *عدد التنبيهات: ${alerts.length}*\n\n`;
+      alerts.forEach((a, idx) => {
+        const icon = a.days < 0 ? '🔴' : a.days <= 7 ? '🟠' : '🟡';
+        const status = a.days < 0 ? `منتهي منذ ${Math.abs(a.days)} يوم` : `ينتهي خلال ${a.days} يوم`;
+        message += `${icon} *${idx + 1}. ${a.name}*\n   📋 ${a.type}: ${a.date}\n   ⏰ ${status}\n\n`;
+      });
+    }
+    message += `${'─'.repeat(30)}\n_تم الإرسال تلقائياً من نظام نواقل_`;
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
   };
 
@@ -293,6 +301,18 @@ export default function ModernCarriersPage() {
           {activeTab === 'reports' && 'لوحة التقارير الذكية'}
         </h3>
         <div className="flex gap-2">
+           {activeTab === 'fleet' && (
+             <button
+               onClick={sendWhatsAppAlerts}
+               className="flex items-center gap-2 px-4 py-2.5 bg-green-500 text-white rounded-xl font-bold hover:bg-green-600 transition shadow-lg shadow-green-200"
+             >
+               <MessageCircle size={20} />
+               <span>إرسال تنبيه واتساب</span>
+               {getAlerts().length > 0 && (
+                 <span className="bg-white text-green-600 text-xs font-black px-1.5 py-0.5 rounded-full">{getAlerts().length}</span>
+               )}
+             </button>
+           )}
            {activeTab === 'fleet' && isAdminMode && (
              <button onClick={() => setShowFleetForm(true)} className="flex items-center gap-2 px-6 py-3 bg-orange-600 text-white rounded-xl font-black hover:bg-orange-700 transition shadow-lg shadow-orange-200 animate-bounce">
                <Plus size={20} /> إضافة شاحنة جديدة
