@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Truck, FileText, Users, ExternalLink, Loader2, Lock, Unlock, ClipboardList, Plus, Pencil, Trash2, X, Download, BarChart2, CheckCircle2, Circle, ListTodo, Map, ArrowRightLeft, Clock, Bell, MessageCircle } from 'lucide-react';
+import { Truck, FileText, Users, ExternalLink, Loader2, Lock, Unlock, ClipboardList, Plus, Pencil, Trash2, X, Download, BarChart2, CheckCircle2, Circle, ListTodo, Map, ArrowRightLeft, Clock, Bell, MessageCircle, Settings } from 'lucide-react';
 
 interface FleetItem { id: number; type: string; plate: string; model: number; expiry: string; periodicInspection?: string; periodicMaintenance?: string; operatingCard?: string; driverCard?: string; aramcoCard?: string; }
 interface CustodyItem { id: number; driverName: string; idNumber: number; type: string; status: string; }
@@ -36,6 +36,9 @@ export default function ModernCarriersPage() {
   const [showTripForm, setShowTripForm] = useState(false);
   const [newTrip, setNewTrip] = useState<Partial<TripItem>>({ status: 'travelling' });
   const [showAlerts, setShowAlerts] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [callmebotApiKey, setCallmebotApiKey] = useState(() => localStorage.getItem('callmebot_api_key') || '');
+  const [callmebotKeyInput, setCallmebotKeyInput] = useState('');
 
   const checkExpiry = (dateStr?: string) => {
     if (!dateStr || dateStr === '-') return { isExpiring: false, days: 999 };
@@ -87,6 +90,59 @@ export default function ModernCarriersPage() {
     });
 
     return alerts.sort((a, b) => a.days - b.days);
+  };
+
+  // ── إشعارات المتصفح ──
+  const sendBrowserNotifications = (alerts: any[]) => {
+    if (!('Notification' in window)) return;
+    const doNotify = () => {
+      if (alerts.length === 0) return;
+      // إشعار واحد مجمّع
+      new Notification('🚛 تنبيه نواقل الحديثة', {
+        body: `يوجد ${alerts.length} مستند${alerts.length === 1 ? '' : 'ات'} تقترب من الانتهاء\n${alerts[0].name}: ${alerts[0].type} خلال ${alerts[0].days} يوم`,
+        icon: '/favicon.ico',
+        dir: 'rtl',
+        tag: 'nwaql-expiry-alert',
+        requireInteraction: true
+      });
+    };
+    if (Notification.permission === 'granted') {
+      doNotify();
+    } else if (Notification.permission !== 'denied') {
+      Notification.requestPermission().then(p => { if (p === 'granted') doNotify(); });
+    }
+  };
+
+  // ── CallMeBot WhatsApp ──
+  const sendCallMeBotMessage = async (alerts: any[], apiKey: string) => {
+    if (!apiKey) return;
+    const today = new Date().toLocaleDateString('sv-SE');
+    const lastSent = localStorage.getItem('callmebot_last_sent');
+    if (lastSent === today) return; // مرة واحدة فقط في اليوم
+
+    const phone = '966545450613';
+    let message = `🚛 *تنبيهات نواقل الحديثة*\n📅 ${today}\n${'─'.repeat(25)}\n\n`;
+    if (alerts.length === 0) {
+      message += '✅ لا توجد مستندات قريبة الانتهاء';
+    } else {
+      message += `⚠️ *${alerts.length} تنبيه تجديد:*\n\n`;
+      alerts.forEach((a, i) => {
+        const icon = a.days < 0 ? '🔴' : a.days <= 7 ? '🟠' : '🟡';
+        const status = a.days < 0 ? `منتهي منذ ${Math.abs(a.days)} يوم` : `خلال ${a.days} يوم`;
+        message += `${icon} ${i + 1}. *${a.name}*\n   📋 ${a.type}: ${a.date}\n   ⏰ ${status}\n\n`;
+      });
+    }
+    message += `${'─'.repeat(25)}\n_نظام نواقل الحديثة_`;
+
+    try {
+      await fetch(
+        `https://api.callmebot.com/whatsapp.php?phone=${phone}&text=${encodeURIComponent(message)}&apikey=${apiKey}`,
+        { mode: 'no-cors' }
+      );
+      localStorage.setItem('callmebot_last_sent', today);
+    } catch (e) {
+      console.warn('CallMeBot error:', e);
+    }
   };
 
   const sendWhatsAppAlerts = () => {
@@ -147,6 +203,79 @@ export default function ModernCarriersPage() {
         
         setData(json);
         setLoading(false);
+
+        // تشغيل الإشعارات التلقائية بعد تحميل البيانات
+        setTimeout(() => {
+          const tempAlerts: any[] = [];
+          json.fleet?.forEach((f: any) => {
+            const fields = [
+              { label: 'استمارة', date: f.expiry },
+              { label: 'فحص دوري', date: f.periodicInspection },
+              { label: 'بطاقة تشغيل', date: f.operatingCard },
+              { label: 'بطاقة سائق', date: f.driverCard },
+              { label: 'بطاقة أرامكو', date: f.aramcoCard },
+            ];
+            fields.forEach(field => {
+              if (!field.date || field.date === '-') return;
+              try {
+                const exp = new Date(field.date);
+                if (isNaN(exp.getTime())) return;
+                const diff = Math.ceil((exp.getTime() - Date.now()) / 86400000);
+                if (diff <= 30) tempAlerts.push({ name: `شاحنة ${f.plate}`, type: field.label, date: field.date, days: diff });
+              } catch {}
+            });
+          });
+          json.employees?.forEach((e: any) => {
+            const fields = [
+              { label: 'هوية', date: e.idExpiry },
+              { label: 'جواز', date: e.passportExpiry },
+              { label: 'تأمين صحي', date: e.healthInsuranceExpiry },
+              { label: 'رخصة', date: e.licenseExpiry },
+            ];
+            fields.forEach(field => {
+              if (!field.date || field.date === '-') return;
+              try {
+                const exp = new Date(field.date);
+                if (isNaN(exp.getTime())) return;
+                const diff = Math.ceil((exp.getTime() - Date.now()) / 86400000);
+                if (diff <= 30) tempAlerts.push({ name: `موظف ${e.name}`, type: field.label, date: field.date, days: diff });
+              } catch {}
+            });
+          });
+          tempAlerts.sort((a, b) => a.days - b.days);
+
+          // 1️⃣ إشعار المتصفح
+          if (tempAlerts.length > 0 && 'Notification' in window) {
+            const doNotify = () => {
+              new Notification('🚛 تنبيه نواقل الحديثة', {
+                body: `يوجد ${tempAlerts.length} مستند يقترب من الانتهاء\n${tempAlerts[0].name}: ${tempAlerts[0].type} (${tempAlerts[0].days} يوم)`,
+                icon: '/favicon.ico',
+                dir: 'rtl',
+                tag: 'nwaql-expiry-alert',
+                requireInteraction: true
+              });
+            };
+            if (Notification.permission === 'granted') doNotify();
+            else if (Notification.permission !== 'denied') Notification.requestPermission().then(p => { if (p === 'granted') doNotify(); });
+          }
+
+          // 2️⃣ CallMeBot (مرة يومية فقط)
+          const apiKey = localStorage.getItem('callmebot_api_key');
+          const lastSent = localStorage.getItem('callmebot_last_sent');
+          const todayStr = new Date().toLocaleDateString('sv-SE');
+          if (apiKey && lastSent !== todayStr && tempAlerts.length > 0) {
+            const phone = '966545450613';
+            let msg = `🚛 *تنبيهات نواقل الحديثة*\n📅 ${todayStr}\n${'─'.repeat(25)}\n\n⚠️ *${tempAlerts.length} تنبيه:*\n\n`;
+            tempAlerts.forEach((a, i) => {
+              const ic = a.days < 0 ? '🔴' : a.days <= 7 ? '🟠' : '🟡';
+              msg += `${ic} ${i + 1}. *${a.name}*\n   📋 ${a.type}: ${a.date}\n   ⏰ ${a.days < 0 ? `منتهي منذ ${Math.abs(a.days)} يوم` : `خلال ${a.days} يوم`}\n\n`;
+            });
+            msg += `${'─'.repeat(25)}\n_نظام نواقل الحديثة_`;
+            fetch(`https://api.callmebot.com/whatsapp.php?phone=${phone}&text=${encodeURIComponent(msg)}&apikey=${apiKey}`, { mode: 'no-cors' })
+              .then(() => localStorage.setItem('callmebot_last_sent', todayStr))
+              .catch(() => {});
+          }
+        }, 1500);
       })
       .catch(err => {
         console.error('Error fetching data:', err);
@@ -213,6 +342,14 @@ export default function ModernCarriersPage() {
                 {getAlerts().length}
               </span>
             )}
+          </button>
+          {/* زر الإعدادات */}
+          <button
+            onClick={() => { setCallmebotKeyInput(callmebotApiKey); setShowSettings(true); }}
+            title="إعدادات الإشعارات"
+            className={`p-2.5 rounded-xl border transition shadow-sm ${callmebotApiKey ? 'bg-green-50 border-green-200 text-green-600' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+          >
+            <Settings size={22} />
           </button>
           <button 
             onClick={() => {
@@ -898,8 +1035,120 @@ export default function ModernCarriersPage() {
         </div>
       )}
 
+      {/* Settings Modal */}
+      {showSettings && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[100] p-4" dir="rtl">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in duration-200">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-green-600 to-green-500 p-5 text-white flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <Settings size={24} />
+                <div>
+                  <h3 className="text-lg font-bold">إعدادات الإشعارات التلقائية</h3>
+                  <p className="text-green-100 text-xs">واتساب + إشعارات المتصفح</p>
+                </div>
+              </div>
+              <button onClick={() => setShowSettings(false)} className="hover:bg-green-700 p-1 rounded-lg transition"><X /></button>
+            </div>
+
+            <div className="p-5 space-y-5">
+              {/* Browser Notifications */}
+              <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Bell size={18} className="text-blue-600" />
+                    <span className="font-bold text-blue-800">إشعارات المتصفح</span>
+                  </div>
+                  <span className={`text-xs px-2 py-1 rounded-full font-bold ${
+                    typeof Notification !== 'undefined' && Notification.permission === 'granted'
+                      ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                  }`}>
+                    {typeof Notification !== 'undefined' && Notification.permission === 'granted' ? '✅ مفعّل' : '⏳ غير مفعّل'}
+                  </span>
+                </div>
+                <p className="text-xs text-blue-600 mb-3">تظهر تلقائياً كل مرة تفتح التطبيق عند وجود مستندات قريبة الانتهاء</p>
+                {typeof Notification !== 'undefined' && Notification.permission !== 'granted' && (
+                  <button
+                    onClick={() => Notification.requestPermission()}
+                    className="w-full bg-blue-600 text-white py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition"
+                  >
+                    تفعيل إشعارات المتصفح
+                  </button>
+                )}
+              </div>
+
+              {/* CallMeBot */}
+              <div className="bg-green-50 rounded-xl p-4 border border-green-100">
+                <div className="flex items-center gap-2 mb-2">
+                  <MessageCircle size={18} className="text-green-600" />
+                  <span className="font-bold text-green-800">إشعارات الواتساب (CallMeBot)</span>
+                  {callmebotApiKey && <span className="text-xs bg-green-200 text-green-800 px-2 py-0.5 rounded-full font-bold">✅ مفعّل</span>}
+                </div>
+
+                {/* خطوات التفعيل */}
+                {!callmebotApiKey && (
+                  <div className="bg-white rounded-lg p-3 mb-3 border border-green-200">
+                    <p className="text-xs font-bold text-gray-700 mb-2">📋 خطوات التفعيل:</p>
+                    <ol className="text-xs text-gray-600 space-y-1 list-none">
+                      <li>1️⃣ احفظ الرقم <span className="font-mono font-bold text-green-700">+34 644 44 44 14</span> في جهات اتصالك</li>
+                      <li>2️⃣ أرسل له على واتساب: <span className="font-bold italic">I allow callmebot to send me messages</span></li>
+                      <li>3️⃣ ستستلم رداً برمز API — أدخله أدناه</li>
+                    </ol>
+                    <div className="mt-2 text-xs bg-yellow-50 border border-yellow-200 rounded p-2 text-yellow-800">
+                      ✅ لقد أرسلت الرسالة بالفعل — انتظر الرد برمز API
+                    </div>
+                  </div>
+                )}
+
+                <input
+                  type="text"
+                  placeholder="أدخل رمز API هنا بعد استلامه..."
+                  className="w-full p-3 border border-green-200 rounded-lg text-sm focus:ring-2 focus:ring-green-400 outline-none font-mono"
+                  value={callmebotKeyInput}
+                  onChange={e => setCallmebotKeyInput(e.target.value)}
+                />
+                <div className="flex gap-2 mt-2">
+                  <button
+                    onClick={() => {
+                      if (callmebotKeyInput.trim()) {
+                        localStorage.setItem('callmebot_api_key', callmebotKeyInput.trim());
+                        localStorage.removeItem('callmebot_last_sent'); // إرسال فوري عند التفعيل
+                        setCallmebotApiKey(callmebotKeyInput.trim());
+                        alert('✅ تم حفظ رمز API! سيُرسل إشعار واتساب تلقائياً يومياً عند فتح التطبيق.');
+                        setShowSettings(false);
+                      }
+                    }}
+                    className="flex-1 bg-green-600 text-white py-2.5 rounded-lg text-sm font-bold hover:bg-green-700 transition"
+                  >
+                    حفظ وتفعيل
+                  </button>
+                  {callmebotApiKey && (
+                    <button
+                      onClick={() => {
+                        if (confirm('هل تريد حذف رمز API؟')) {
+                          localStorage.removeItem('callmebot_api_key');
+                          localStorage.removeItem('callmebot_last_sent');
+                          setCallmebotApiKey('');
+                          setCallmebotKeyInput('');
+                        }
+                      }}
+                      className="px-3 bg-red-50 text-red-600 rounded-lg text-sm border border-red-200 hover:bg-red-100 transition"
+                    >
+                      حذف
+                    </button>
+                  )}
+                </div>
+                <p className="text-[10px] text-gray-400 mt-2 text-center">
+                  سيُرسل الإشعار مرة واحدة يومياً إلى: +966545450613
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="mt-8 text-center text-[10px] text-gray-400">
-        نسخة v1.4.5 - تفعيل نظام تنبيهات التجديد والواتساب
+        نسخة v1.5.0 - نظام الإشعارات التلقائي (متصفح + واتساب)
       </div>
     </div>
   );
