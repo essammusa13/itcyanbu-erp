@@ -33,14 +33,21 @@ export default function ModernCarriersPage() {
   const [showFleetForm, setShowFleetForm] = useState(false);
   const [newTask, setNewTask] = useState<Partial<TaskItem>>({ status: 'pending' });
   const [newFleet, setNewFleet] = useState<Partial<FleetItem & { sn: string, deviceType: string }>>({});
+  const [isEditingFleet, setIsEditingFleet] = useState(false);
+  const [editingFleetItem, setEditingFleetItem] = useState<FleetItem | null>(null);
+
   const [showTripForm, setShowTripForm] = useState(false);
   const [newTrip, setNewTrip] = useState<Partial<TripItem>>({ status: 'travelling' });
+
+  const [showCustodyForm, setShowCustodyForm] = useState(false);
+  const [newCustody, setNewCustody] = useState<Partial<CustodyItem>>({});
+  const [isEditingCustody, setIsEditingCustody] = useState(false);
+  const [editingCustodyItem, setEditingCustodyItem] = useState<CustodyItem | null>(null);
+
   const [showAlerts, setShowAlerts] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [callmebotApiKey, setCallmebotApiKey] = useState(() => localStorage.getItem('callmebot_api_key') || '');
   const [callmebotKeyInput, setCallmebotKeyInput] = useState('');
-  const [ntfyTopic, setNtfyTopic] = useState(() => localStorage.getItem('ntfy_topic') || '');
-  const [ntfyTopicInput, setNtfyTopicInput] = useState('');
 
   const checkExpiry = (dateStr?: string) => {
     if (!dateStr || dateStr === '-') return { isExpiring: false, days: 999 };
@@ -92,59 +99,6 @@ export default function ModernCarriersPage() {
     });
 
     return alerts.sort((a, b) => a.days - b.days);
-  };
-
-  // ── إشعارات المتصفح ──
-  const sendBrowserNotifications = (alerts: any[]) => {
-    if (!('Notification' in window)) return;
-    const doNotify = () => {
-      if (alerts.length === 0) return;
-      // إشعار واحد مجمّع
-      new Notification('🚛 تنبيه نواقل الحديثة', {
-        body: `يوجد ${alerts.length} مستند${alerts.length === 1 ? '' : 'ات'} تقترب من الانتهاء\n${alerts[0].name}: ${alerts[0].type} خلال ${alerts[0].days} يوم`,
-        icon: '/favicon.ico',
-        dir: 'rtl',
-        tag: 'nwaql-expiry-alert',
-        requireInteraction: true
-      });
-    };
-    if (Notification.permission === 'granted') {
-      doNotify();
-    } else if (Notification.permission !== 'denied') {
-      Notification.requestPermission().then(p => { if (p === 'granted') doNotify(); });
-    }
-  };
-
-  // ── CallMeBot WhatsApp ──
-  const sendCallMeBotMessage = async (alerts: any[], apiKey: string) => {
-    if (!apiKey) return;
-    const today = new Date().toLocaleDateString('sv-SE');
-    const lastSent = localStorage.getItem('callmebot_last_sent');
-    if (lastSent === today) return; // مرة واحدة فقط في اليوم
-
-    const phone = '966545450613';
-    let message = `🚛 *تنبيهات نواقل الحديثة*\n📅 ${today}\n${'─'.repeat(25)}\n\n`;
-    if (alerts.length === 0) {
-      message += '✅ لا توجد مستندات قريبة الانتهاء';
-    } else {
-      message += `⚠️ *${alerts.length} تنبيه تجديد:*\n\n`;
-      alerts.forEach((a, i) => {
-        const icon = a.days < 0 ? '🔴' : a.days <= 7 ? '🟠' : '🟡';
-        const status = a.days < 0 ? `منتهي منذ ${Math.abs(a.days)} يوم` : `خلال ${a.days} يوم`;
-        message += `${icon} ${i + 1}. *${a.name}*\n   📋 ${a.type}: ${a.date}\n   ⏰ ${status}\n\n`;
-      });
-    }
-    message += `${'─'.repeat(25)}\n_نظام نواقل الحديثة_`;
-
-    try {
-      await fetch(
-        `https://api.callmebot.com/whatsapp.php?phone=${phone}&text=${encodeURIComponent(message)}&apikey=${apiKey}`,
-        { mode: 'no-cors' }
-      );
-      localStorage.setItem('callmebot_last_sent', today);
-    } catch (e) {
-      console.warn('CallMeBot error:', e);
-    }
   };
 
   const sendWhatsAppAlerts = () => {
@@ -265,11 +219,11 @@ export default function ModernCarriersPage() {
           // 2️⃣ ntfy.sh (إشعار فوري على الهاتف - مرة يومية)
           const ntfyT = localStorage.getItem('ntfy_topic');
           const ntfyLastSent = localStorage.getItem('ntfy_last_sent');
-          const todayStr = new Date().toLocaleDateString('sv-SE');
+          
           if (ntfyT && ntfyLastSent !== todayStr && tempAlerts.length > 0) {
             const topAlert = tempAlerts[0];
             const body = `يوجد ${tempAlerts.length} مستند تجديد قريب الانتهاء\n\n` +
-              tempAlerts.map((a, i) => {
+              tempAlerts.map((a) => {
                 const ic = a.days < 0 ? '🔴' : a.days <= 7 ? '🟠' : '🟡';
                 return `${ic} ${a.name} | ${a.type}: ${a.days < 0 ? 'منتهي' : `خلال ${a.days} يوم`}`;
               }).join('\n');
@@ -479,8 +433,13 @@ export default function ModernCarriersPage() {
              </button>
            )}
            {activeTab === 'fleet' && isAdminMode && (
-             <button onClick={() => setShowFleetForm(true)} className="flex items-center gap-2 px-6 py-3 bg-orange-600 text-white rounded-xl font-black hover:bg-orange-700 transition shadow-lg shadow-orange-200 animate-bounce">
+             <button onClick={() => { setIsEditingFleet(false); setNewFleet({}); setShowFleetForm(true); }} className="flex items-center gap-2 px-6 py-3 bg-orange-600 text-white rounded-xl font-black hover:bg-orange-700 transition shadow-lg shadow-orange-200 animate-bounce">
                <Plus size={20} /> إضافة شاحنة جديدة
+             </button>
+           )}
+           {activeTab === 'custody' && isAdminMode && (
+             <button onClick={() => { setIsEditingCustody(false); setNewCustody({}); setShowCustodyForm(true); }} className="flex items-center gap-2 px-6 py-3 bg-orange-600 text-white rounded-xl font-black hover:bg-orange-700 transition shadow-lg shadow-orange-200 animate-bounce">
+               <Plus size={20} /> إضافة عهدة جديدة
              </button>
            )}
            {activeTab === 'attendance' && (
@@ -509,7 +468,7 @@ export default function ModernCarriersPage() {
                }} className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition">
                  <Download size={18} /> تصدير
                </button>
-               <button onClick={() => setShowAddForm(true)} className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+               <button onClick={() => { setIsEditing(false); setNewEmployee({}); setShowAddForm(true); }} className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
                  <Plus size={18} /> إضافة موظف
                </button>
              </>
@@ -547,6 +506,7 @@ export default function ModernCarriersPage() {
                   <th className="p-3 bg-blue-50">S/N الجهاز</th>
                   <th className="p-3 bg-blue-50">نوع التتبع</th>
                   <th className="p-3 bg-blue-50">حالة الجهاز</th>
+                  {isAdminMode && <th className="p-3">إجراءات</th>}
                 </tr>
               </thead>
               <tbody>
@@ -571,6 +531,20 @@ export default function ModernCarriersPage() {
                           <span className="text-green-600 font-bold">{device.status}</span>
                         ) : '-'}
                       </td>
+                      {isAdminMode && (
+                        <td className="p-3 flex gap-2">
+                          <button onClick={() => { setEditingFleetItem(item); setIsEditingFleet(true); setShowFleetForm(true); }} className="p-1 text-blue-600 hover:bg-blue-50 rounded"><Pencil size={16} /></button>
+                          <button onClick={() => {
+                            if (confirm('حذف الشاحنة؟')) {
+                              const updatedFleet = data.fleet.filter(f => f.id !== item.id);
+                              const updatedDevices = data.devices.filter(d => d.plate !== item.plate);
+                              setData({ ...data, fleet: updatedFleet, devices: updatedDevices });
+                              localStorage.setItem('modern_carriers_fleet', JSON.stringify(updatedFleet));
+                              localStorage.setItem('modern_carriers_devices', JSON.stringify(updatedDevices));
+                            }
+                          }} className="p-1 text-red-600 hover:bg-red-50 rounded"><Trash2 size={16} /></button>
+                        </td>
+                      )}
                     </tr>
                   );
                 })}
@@ -582,7 +556,7 @@ export default function ModernCarriersPage() {
         {data && activeTab === 'custody' && (
           <div className="overflow-auto max-h-[600px] border rounded-lg">
             <table className="w-full text-right">
-              <thead><tr className="bg-gray-50 border-b"><th className="p-3">م</th><th className="p-3">السائق</th><th className="p-3">رقم الهوية</th><th className="p-3">نوع العهدة</th><th className="p-3">الحالة</th></tr></thead>
+              <thead><tr className="bg-gray-50 border-b"><th className="p-3">م</th><th className="p-3">السائق</th><th className="p-3">رقم الهوية</th><th className="p-3">نوع العهدة</th><th className="p-3">الحالة</th>{isAdminMode && <th className="p-3">إجراءات</th>}</tr></thead>
               <tbody>
                 {data.custody.map((item, i) => (
                   <tr key={i} className="border-b hover:bg-gray-50">
@@ -593,6 +567,18 @@ export default function ModernCarriersPage() {
                     <td className="p-3">
                       <span className="px-2 py-1 rounded-full text-[10px] bg-green-100 text-green-700 font-bold">{item.status}</span>
                     </td>
+                    {isAdminMode && (
+                      <td className="p-3 flex gap-2">
+                        <button onClick={() => { setEditingCustodyItem(item); setIsEditingCustody(true); setShowCustodyForm(true); }} className="p-1 text-blue-600 hover:bg-blue-50 rounded"><Pencil size={16} /></button>
+                        <button onClick={() => {
+                          if (confirm('حذف العهدة؟')) {
+                            const updated = data.custody.filter(c => c.id !== item.id);
+                            setData({ ...data, custody: updated });
+                            localStorage.setItem('modern_carriers_custody', JSON.stringify(updated));
+                          }
+                        }} className="p-1 text-red-600 hover:bg-red-50 rounded"><Trash2 size={16} /></button>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -869,58 +855,77 @@ export default function ModernCarriersPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" dir="rtl">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold">إضافة شاحنة جديدة</h3>
+              <h3 className="text-xl font-bold">{isEditingFleet ? 'تعديل شاحنة' : 'إضافة شاحنة جديدة'}</h3>
               <button onClick={() => setShowFleetForm(false)}><X /></button>
             </div>
             <div className="space-y-4">
-              <input placeholder="نوع الشاحنة" className="w-full p-2 border rounded" value={newFleet.type || ''} onChange={e => setNewFleet({...newFleet, type: e.target.value})} />
+              <input placeholder="نوع الشاحنة" className="w-full p-2 border rounded" value={isEditingFleet ? editingFleetItem?.type : newFleet.type || ''} onChange={e => isEditingFleet ? setEditingFleetItem({...editingFleetItem!, type: e.target.value}) : setNewFleet({...newFleet, type: e.target.value})} />
               <div className="grid grid-cols-2 gap-2">
-                <input placeholder="رقم اللوحة" className="p-2 border rounded" value={newFleet.plate || ''} onChange={e => setNewFleet({...newFleet, plate: e.target.value})} />
-                <input placeholder="الموديل (سنة)" type="number" className="p-2 border rounded" value={newFleet.model || ''} onChange={e => setNewFleet({...newFleet, model: parseInt(e.target.value)})} />
+                <input placeholder="رقم اللوحة" className="p-2 border rounded" value={isEditingFleet ? editingFleetItem?.plate : newFleet.plate || ''} onChange={e => isEditingFleet ? setEditingFleetItem({...editingFleetItem!, plate: e.target.value}) : setNewFleet({...newFleet, plate: e.target.value})} />
+                <input placeholder="الموديل (سنة)" type="number" className="p-2 border rounded" value={isEditingFleet ? editingFleetItem?.model : newFleet.model || ''} onChange={e => isEditingFleet ? setEditingFleetItem({...editingFleetItem!, model: parseInt(e.target.value)}) : setNewFleet({...newFleet, model: parseInt(e.target.value)})} />
               </div>
               <div className="grid grid-cols-2 gap-2">
-                <input placeholder="تجديد الاستمارة" className="p-2 border rounded" value={newFleet.expiry || ''} onChange={e => setNewFleet({...newFleet, expiry: e.target.value})} />
-                <input placeholder="الفحص الدوري" className="p-2 border rounded" value={newFleet.periodicInspection || ''} onChange={e => setNewFleet({...newFleet, periodicInspection: e.target.value})} />
+                <input placeholder="تجديد الاستمارة" className="p-2 border rounded" value={isEditingFleet ? editingFleetItem?.expiry : newFleet.expiry || ''} onChange={e => isEditingFleet ? setEditingFleetItem({...editingFleetItem!, expiry: e.target.value}) : setNewFleet({...newFleet, expiry: e.target.value})} />
+                <input placeholder="الفحص الدوري" className="p-2 border rounded" value={isEditingFleet ? editingFleetItem?.periodicInspection : newFleet.periodicInspection || ''} onChange={e => isEditingFleet ? setEditingFleetItem({...editingFleetItem!, periodicInspection: e.target.value}) : setNewFleet({...newFleet, periodicInspection: e.target.value})} />
               </div>
               <div className="grid grid-cols-2 gap-2">
-                <input placeholder="الصيانة الدورية" className="p-2 border rounded" value={newFleet.periodicMaintenance || ''} onChange={e => setNewFleet({...newFleet, periodicMaintenance: e.target.value})} />
-                <input placeholder="بطاقة التشغيل" className="p-2 border rounded" value={newFleet.operatingCard || ''} onChange={e => setNewFleet({...newFleet, operatingCard: e.target.value})} />
+                <input placeholder="الصيانة الدورية" className="p-2 border rounded" value={isEditingFleet ? editingFleetItem?.periodicMaintenance : newFleet.periodicMaintenance || ''} onChange={e => isEditingFleet ? setEditingFleetItem({...editingFleetItem!, periodicMaintenance: e.target.value}) : setNewFleet({...newFleet, periodicMaintenance: e.target.value})} />
+                <input placeholder="بطاقة التشغيل" className="p-2 border rounded" value={isEditingFleet ? editingFleetItem?.operatingCard : newFleet.operatingCard || ''} onChange={e => isEditingFleet ? setEditingFleetItem({...editingFleetItem!, operatingCard: e.target.value}) : setNewFleet({...newFleet, operatingCard: e.target.value})} />
               </div>
               <div className="grid grid-cols-2 gap-2">
-                <input placeholder="بطاقة السائق" className="p-2 border rounded" value={newFleet.driverCard || ''} onChange={e => setNewFleet({...newFleet, driverCard: e.target.value})} />
-                <input placeholder="بطاقة أرامكو" className="p-2 border rounded" value={newFleet.aramcoCard || ''} onChange={e => setNewFleet({...newFleet, aramcoCard: e.target.value})} />
+                <input placeholder="بطاقة السائق" className="p-2 border rounded" value={isEditingFleet ? editingFleetItem?.driverCard : newFleet.driverCard || ''} onChange={e => isEditingFleet ? setEditingFleetItem({...editingFleetItem!, driverCard: e.target.value}) : setNewFleet({...newFleet, driverCard: e.target.value})} />
+                <input placeholder="بطاقة أرامكو" className="p-2 border rounded" value={isEditingFleet ? editingFleetItem?.aramcoCard : newFleet.aramcoCard || ''} onChange={e => isEditingFleet ? setEditingFleetItem({...editingFleetItem!, aramcoCard: e.target.value}) : setNewFleet({...newFleet, aramcoCard: e.target.value})} />
               </div>
               <div className="border-t pt-4 mt-4">
                 <p className="text-xs font-bold text-blue-600 mb-2">بيانات جهاز التتبع (اختياري)</p>
                 <div className="grid grid-cols-2 gap-2">
-                  <input placeholder="S/N الجهاز" className="p-2 border rounded" value={newFleet.sn || ''} onChange={e => setNewFleet({...newFleet, sn: e.target.value})} />
                   <input placeholder="نوع التتبع" className="p-2 border rounded" value={newFleet.deviceType || ''} onChange={e => setNewFleet({...newFleet, deviceType: e.target.value})} />
                 </div>
               </div>
               <button onClick={() => {
-                const fleetItem = { 
-                  id: Date.now(), 
-                  type: newFleet.type, 
-                  plate: newFleet.plate, 
-                  model: newFleet.model, 
-                  expiry: newFleet.expiry,
-                  periodicInspection: newFleet.periodicInspection,
-                  periodicMaintenance: newFleet.periodicMaintenance,
-                  operatingCard: newFleet.operatingCard,
-                  driverCard: newFleet.driverCard,
-                  aramcoCard: newFleet.aramcoCard
-                } as FleetItem;
-                const updatedFleet = [...(data?.fleet || []), fleetItem];
-                
-                let updatedDevices = data?.devices || [];
-                if (newFleet.sn) {
-                  const deviceItem = { id: Date.now() + 1, plate: newFleet.plate, sn: newFleet.sn, type: newFleet.deviceType || 'GPS', status: 'فعال' } as DeviceItem;
-                  updatedDevices = [...updatedDevices, deviceItem];
-                }
+                if (isEditingFleet && editingFleetItem) {
+                  const updatedFleet = data!.fleet.map(f => f.id === editingFleetItem.id ? { ...editingFleetItem, ...newFleet } as FleetItem : f);
+                  // Update device if SN or type changed
+                  let updatedDevices = data!.devices;
+                  if (newFleet.sn) {
+                    const deviceIdx = updatedDevices.findIndex(d => d.plate === editingFleetItem.plate);
+                    if (deviceIdx !== -1) {
+                      updatedDevices[deviceIdx] = { ...updatedDevices[deviceIdx], sn: newFleet.sn, type: newFleet.deviceType || updatedDevices[deviceIdx].type } as DeviceItem;
+                    } else {
+                      const deviceItem = { id: Date.now() + 1, plate: newFleet.plate || editingFleetItem.plate, sn: newFleet.sn, type: newFleet.deviceType || 'GPS', status: 'فعال' } as DeviceItem;
+                      updatedDevices = [...updatedDevices, deviceItem];
+                    }
+                  }
+                  setData({ ...data!, fleet: updatedFleet, devices: updatedDevices });
+                  localStorage.setItem('modern_carriers_fleet', JSON.stringify(updatedFleet));
+                  localStorage.setItem('modern_carriers_devices', JSON.stringify(updatedDevices));
+                  setIsEditingFleet(false);
+                  setEditingFleetItem(null);
+                } else {
+                  const fleetItem = { 
+                    id: Date.now(), 
+                    type: newFleet.type, 
+                    plate: newFleet.plate, 
+                    model: newFleet.model, 
+                    expiry: newFleet.expiry,
+                    periodicInspection: newFleet.periodicInspection,
+                    periodicMaintenance: newFleet.periodicMaintenance,
+                    operatingCard: newFleet.operatingCard,
+                    driverCard: newFleet.driverCard,
+                    aramcoCard: newFleet.aramcoCard
+                  } as FleetItem;
+                  const updatedFleet = [...(data?.fleet || []), fleetItem];
+                  
+                  let updatedDevices = data?.devices || [];
+                  if (newFleet.sn) {
+                    const deviceItem = { id: Date.now() + 1, plate: newFleet.plate, sn: newFleet.sn, type: newFleet.deviceType || 'GPS', status: 'فعال' } as DeviceItem;
+                    updatedDevices = [...updatedDevices, deviceItem];
+                  }
 
-                setData({...data!, fleet: updatedFleet, devices: updatedDevices});
-                localStorage.setItem('modern_carriers_fleet', JSON.stringify(updatedFleet));
-                localStorage.setItem('modern_carriers_devices', JSON.stringify(updatedDevices));
+                  setData({...data!, fleet: updatedFleet, devices: updatedDevices});
+                  localStorage.setItem('modern_carriers_fleet', JSON.stringify(updatedFleet));
+                  localStorage.setItem('modern_carriers_devices', JSON.stringify(updatedDevices));
+                }
                 setShowFleetForm(false);
                 setNewFleet({});
               }} className="w-full bg-blue-600 text-white p-3 rounded-xl font-bold">حفظ البيانات</button>
@@ -929,7 +934,38 @@ export default function ModernCarriersPage() {
         </div>
       )}
 
-
+      {showCustodyForm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" dir="rtl">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold">{isEditingCustody ? 'تعديل عهدة' : 'إضافة عهدة جديدة'}</h3>
+              <button onClick={() => setShowCustodyForm(false)}><X /></button>
+            </div>
+            <div className="space-y-4">
+              <input placeholder="اسم السائق" className="w-full p-2 border rounded" value={isEditingCustody ? editingCustodyItem?.driverName : newCustody.driverName || ''} onChange={e => isEditingCustody ? setEditingCustodyItem({...editingCustodyItem!, driverName: e.target.value}) : setNewCustody({...newCustody, driverName: e.target.value})} />
+              <input placeholder="رقم الهوية" type="number" className="w-full p-2 border rounded" value={isEditingCustody ? editingCustodyItem?.idNumber : newCustody.idNumber || ''} onChange={e => isEditingCustody ? setEditingCustodyItem({...editingCustodyItem!, idNumber: parseInt(e.target.value)}) : setNewCustody({...newCustody, idNumber: parseInt(e.target.value)})} />
+              <input placeholder="نوع العهدة" className="w-full p-2 border rounded" value={isEditingCustody ? editingCustodyItem?.type : newCustody.type || ''} onChange={e => isEditingCustody ? setEditingCustodyItem({...editingCustodyItem!, type: e.target.value}) : setNewCustody({...newCustody, type: e.target.value})} />
+              <input placeholder="الحالة (مثال: مسلمة)" className="w-full p-2 border rounded" value={isEditingCustody ? editingCustodyItem?.status : newCustody.status || ''} onChange={e => isEditingCustody ? setEditingCustodyItem({...editingCustodyItem!, status: e.target.value}) : setNewCustody({...newCustody, status: e.target.value})} />
+              <button onClick={() => {
+                if (isEditingCustody && editingCustodyItem) {
+                  const updated = data!.custody.map(c => c.id === editingCustodyItem.id ? { ...editingCustodyItem, ...newCustody } as CustodyItem : c);
+                  setData({ ...data!, custody: updated });
+                  localStorage.setItem('modern_carriers_custody', JSON.stringify(updated));
+                  setIsEditingCustody(false);
+                  setEditingCustodyItem(null);
+                } else {
+                  const item = { ...newCustody, id: Date.now() } as CustodyItem;
+                  const updated = [...(data?.custody || []), item];
+                  setData({ ...data!, custody: updated });
+                  localStorage.setItem('modern_carriers_custody', JSON.stringify(updated));
+                }
+                setShowCustodyForm(false);
+                setNewCustody({});
+              }} className="w-full bg-orange-600 text-white p-3 rounded-xl font-bold">حفظ العهدة</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showTripForm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" dir="rtl">
