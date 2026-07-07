@@ -39,7 +39,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeModule = 'Contacts', onModuleCh
     const { t, i18n } = useTranslation();
 
     // Profile State
-    const [profileName] = useState(() => localStorage.getItem('ghl_profile_name') || 'Ai & IT Solutions');
+    const [profileName] = useState(() => localStorage.getItem('ghl_profile_name') || 'AI, BI and IT Solutions');
     const [profileLogo] = useState('/itc-logo.jpg');
 
     const menuItems = [

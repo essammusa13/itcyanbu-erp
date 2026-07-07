@@ -118,7 +118,7 @@ const SettingsPage = () => {
         // Missed Call Text Back
         missedCallTextBack: {
             enabled: true,
-            message: 'Hi, this is Ai & IT Solutions. Sorry we missed your call. How can we help you?'
+            message: 'Hi, this is AI, BI and IT Solutions. Sorry we missed your call. How can we help you?'
         },
 
         // Contact Duplication
