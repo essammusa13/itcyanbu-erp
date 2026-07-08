@@ -63,7 +63,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeModule = 'Contacts', onModuleCh
         { icon: Image, label: 'Media Library', id: 'Media Library', tKey: 'sidebar.media_library' },
         { icon: Facebook, label: 'Facebook Group', id: 'Facebook Group', tKey: 'sidebar.facebook_group' },
         { icon: Brain, label: 'AI Solutions', id: 'AI Solutions', tKey: 'sidebar.ai_solutions' },
-        { icon: Truck, label: 'Modern Carriers', id: 'Modern Carriers', tKey: 'Modern Carriers' }
+        { icon: Truck, label: 'trucks', id: 'trucks', tKey: 'trucks' }
     ];
 
     const toggleLanguage = () => {

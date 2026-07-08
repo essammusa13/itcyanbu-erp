@@ -100,7 +100,7 @@ function App() {
         return <WebinarPage />;
       case 'Property Tour':
         return <PropertyTourPage />;
-      case 'Modern Carriers':
+      case 'trucks':
         return <ModernCarriersPage />;
       default:
         return <ContactsPage />;

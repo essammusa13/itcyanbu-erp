@@ -105,7 +105,7 @@ export default function ModernCarriersPage() {
     const alerts = getAlerts();
     const phone = "966545450613";
     const today = new Date().toLocaleDateString('ar-SA', { year: 'numeric', month: 'long', day: 'numeric' });
-    let message = `🚛 *تقرير تنبيهات التجديد*\n*مؤسسة نواقل الحديثة للنقليات*\n📅 ${today}\n`;
+    let message = `🚛 *تقرير تنبيهات التجديد*\n*trucks*\n📅 ${today}\n`;
     message += `${'─'.repeat(30)}\n\n`;
     if (alerts.length === 0) {
       message += '✅ لا توجد مستندات قريبة الانتهاء حالياً';
@@ -310,7 +310,7 @@ export default function ModernCarriersPage() {
       {/* Header Area */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-black text-gray-900 mb-1">مؤسسة نواقل الحديثة للنقليات</h1>
+          <h1 className="text-3xl font-black text-gray-900 mb-1">trucks</h1>
           <p className="text-gray-500">لوحة التقارير والتتبع الذكية</p>
         </div>
         <div className="flex items-center gap-3">
@@ -357,7 +357,7 @@ export default function ModernCarriersPage() {
             rel="noopener noreferrer"
             className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-200"
           >
-            <span>فتح تطبيق Modern Carriers</span>
+            <span>فتح تطبيق trucks</span>
             <ExternalLink size={18} />
           </a>
         </div>
