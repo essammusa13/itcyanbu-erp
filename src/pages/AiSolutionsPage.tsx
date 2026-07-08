@@ -183,7 +183,32 @@ const AiSolutionsPage = () => {
                         })}
                     </div>
                 );
-            case 'cctv-ai':
+            case 'getting-started':
+        return (
+            <div className="p-8 space-y-6 animate-in fade-in duration-300 bg-white rounded-xl shadow-sm">
+                <h2 className="text-2xl font-bold text-gray-900">{t('ai_solutions.getting_started')}</h2>
+                <p className="text-gray-600">Explore our AI solutions via the links below.</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {[
+                        'https://modern-carriers.lovable.app',
+                        'https://wonder-sphere-hub.lovable.app',
+                        'https://galaxy-link-point.lovable.app',
+                        'https://itcyanbu-digital-blueprint.lovable.app',
+                    ].map((url, idx) => (
+                        <a
+                            key={idx}
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center px-4 py-2 bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-semibold rounded-lg hover:from-purple-600 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg"
+                        >
+                            {url.replace('https://', '')}
+                        </a>
+                    ))}
+                </div>
+            </div>
+        );
+        case 'cctv-ai':
                 if (cctvSubView === 'overview') {
                     return (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 max-w-4xl mx-auto py-12 animate-in slide-in-from-bottom-4 duration-500">
