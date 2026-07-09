@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UniSearch China – Student App Mockup</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #4F46E5;
+      --primary-dark: #4338CA;
+      --accent: #06B6D4;
+      --success: #10B981;
+      --warning: #F59E0B;
+      --bg: #F0F4FF;
+      --surface: #FFFFFF;
+      --card: #FFFFFF;
+      --text: #0F172A;
+      --muted: #64748B;
+      --border: #E2E8F0;
+      --radius: 16px;
+      --radius-sm: 10px;
+      --shadow: 0 4px 24px rgba(79,70,229,0.10);
+      --shadow-lg: 0 8px 40px rgba(79,70,229,0.18);
+    }
+
+    [data-lang="ar"] {
+      direction: rtl;
+      font-family: 'Cairo', 'Inter', sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding: 30px 16px;
+    }
+
+    /* ── Page wrapper ── */
+    .page-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 28px;
+      width: 100%;
+      max-width: 520px;
+    }
+
+    .page-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      text-align: center;
+    }
+
+    /* ── Phone Shell ── */
+    .phone {
+      width: 100%;
+      max-width: 390px;
+      min-height: 812px;
+      background: var(--surface);
+      border-radius: 44px;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.22), 0 0 0 10px #1C1C1E, 0 0 0 12px #3A3A3C;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* ── Status bar ── */
+    .status-bar {
+      background: var(--primary);
+      padding: 14px 24px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: white;
+    }
+    .status-bar .notch {
+      width: 90px;
+      height: 22px;
+      background: #1C1C1E;
+      border-radius: 0 0 16px 16px;
+    }
+
+    /* ── Header ── */
+    .app-header {
+      background: linear-gradient(135deg, var(--primary) 0%, #6366F1 100%);
+      padding: 16px 20px 20px;
+      color: white;
+    }
+
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .app-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .app-logo {
+      width: 36px;
+      height: 36px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      backdrop-filter: blur(8px);
+    }
+
+    .app-name { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; }
+    .app-sub  { font-size: 11px; opacity: 0.75; font-weight: 500; }
+
+    .lang-btn {
+      background: rgba(255,255,255,0.18);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: white;
+      padding: 7px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      transition: all 0.2s;
+    }
+    .lang-btn:hover { background: rgba(255,255,255,0.28); }
+
+    .search-wrap {
+      position: relative;
+    }
+    .search-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      opacity: 0.5;
+      font-size: 16px;
+    }
+    [data-lang="ar"] .search-icon { left: auto; right: 14px; }
+
+    .search-input {
+      width: 100%;
+      padding: 13px 16px 13px 40px;
+      border-radius: 14px;
+      border: none;
+      font-size: 15px;
+      background: rgba(255,255,255,0.95);
+      color: var(--text);
+      font-family: inherit;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+      outline: none;
+    }
+    [data-lang="ar"] .search-input { padding: 13px 40px 13px 16px; text-align: right; }
+
+    /* ── Filters ── */
+    .filters {
+      display: flex;
+      gap: 8px;
+      padding: 14px 16px;
+      overflow-x: auto;
+      background: white;
+      border-bottom: 1px solid var(--border);
+      scrollbar-width: none;
+    }
+    .filters::-webkit-scrollbar { display: none; }
+
+    .chip {
+      padding: 7px 15px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+      border: 1.5px solid var(--border);
+      background: #F8FAFF;
+      color: var(--muted);
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    .chip.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+      box-shadow: 0 4px 12px rgba(79,70,229,0.35);
+    }
+    .chip:hover:not(.active) { border-color: var(--primary); color: var(--primary); }
+
+    /* ── Content Area ── */
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      background: var(--bg);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      scrollbar-width: none;
+    }
+    .content::-webkit-scrollbar { display: none; }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .section-title { font-size: 17px; font-weight: 800; color: var(--text); }
+    .see-all { font-size: 13px; font-weight: 600; color: var(--primary); cursor: pointer; }
+
+    /* ── University Card ── */
+    .uni-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      border: 1px solid rgba(79,70,229,0.06);
+    }
+    .uni-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+    .uni-card:active { transform: translateY(0); }
+
+    .card-img {
+      height: 148px;
+      background-size: cover;
+      background-position: center;
+      position: relative;
+    }
+    .card-img-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 60%);
+    }
+
+    .card-badges {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      display: flex;
+      gap: 6px;
+    }
+    [data-lang="ar"] .card-badges { left: auto; right: 10px; }
+
+    .badge {
+      padding: 4px 9px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+    .badge-rank  { background: #F59E0B; color: #1C1400; }
+    .badge-type  { background: rgba(255,255,255,0.9); color: var(--primary); }
+    .badge-featured { background: var(--success); color: white; }
+
+    .card-bottom-label {
+      position: absolute;
+      bottom: 10px;
+      left: 12px;
+      right: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .card-uni-name-overlay {
+      font-size: 15px;
+      font-weight: 800;
+      color: white;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+    }
+
+    .card-body { padding: 14px; }
+
+    .card-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+
+    .card-title { font-size: 16px; font-weight: 800; color: var(--text); line-height: 1.3; }
+    .card-subtitle { font-size: 13px; color: var(--muted); margin-top: 2px; font-weight: 500; }
+
+    .save-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 20px;
+      line-height: 1;
+      padding: 2px;
+      opacity: 0.4;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    .save-btn:hover { opacity: 1; transform: scale(1.2); }
+    .save-btn.saved { opacity: 1; }
+
+    .card-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+    .tag {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 9px;
+      border-radius: 6px;
+      background: #EEF2FF;
+      color: var(--primary);
+    }
+    .tag.green  { background: #ECFDF5; color: #059669; }
+    .tag.orange { background: #FFF7ED; color: #D97706; }
+    .tag.cyan   { background: #ECFEFF; color: #0891B2; }
+
+    .card-meta {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 14px;
+    }
+    .meta-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .meta-label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .meta-value { font-size: 13px; font-weight: 700; color: var(--text); }
+
+    .card-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .btn-primary {
+      flex: 1;
+      padding: 11px 16px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.2s, transform 0.1s;
+      box-shadow: 0 4px 12px rgba(79,70,229,0.3);
+    }
+    .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
+    .btn-primary:active { transform: translateY(0); }
+
+    .btn-outline {
+      padding: 11px 14px;
+      background: white;
+      color: var(--primary);
+      border: 1.5px solid var(--primary);
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+    .btn-outline:hover { background: #EEF2FF; }
+
+    /* ── Quick Stats Banner ── */
+    .stats-banner {
+      background: linear-gradient(135deg, #1E1B4B 0%, #312E81 100%);
+      border-radius: var(--radius);
+      padding: 16px;
+      display: flex;
+      justify-content: space-around;
+      color: white;
+      box-shadow: 0 8px 32px rgba(30,27,75,0.4);
+    }
+    .stat-item { text-align: center; }
+    .stat-value { font-size: 22px; font-weight: 900; letter-spacing: -1px; }
+    .stat-label { font-size: 10px; opacity: 0.65; font-weight: 600; margin-top: 2px; letter-spacing: 0.5px; }
+    .stat-divider { width: 1px; background: rgba(255,255,255,0.15); }
+
+    /* ── Bottom Nav ── */
+    .bottom-nav {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding: 12px 8px 24px;
+      background: white;
+      border-top: 1px solid var(--border);
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.06);
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      padding: 6px 12px;
+      border-radius: 12px;
+      transition: background 0.2s;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 600;
+    }
+    .nav-item.active { color: var(--primary); background: #EEF2FF; }
+    .nav-item:hover:not(.active) { background: #F8FAFF; }
+
+    .nav-icon { font-size: 22px; line-height: 1; }
+
+    /* ── Floating CTA ── */
+    .fab {
+      position: absolute;
+      bottom: 85px;
+      right: 18px;
+      width: 52px;
+      height: 52px;
+      background: linear-gradient(135deg, var(--primary), #818CF8);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      box-shadow: 0 8px 24px rgba(79,70,229,0.45);
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      border: none;
+    }
+    [data-lang="ar"] .fab { right: auto; left: 18px; }
+    .fab:hover { transform: scale(1.08); box-shadow: 0 12px 32px rgba(79,70,229,0.55); }
+
+    /* ── Lang toggle strip outside phone ── */
+    .lang-strip {
+      display: flex;
+      gap: 10px;
+      background: white;
+      border-radius: 50px;
+      padding: 6px;
+      box-shadow: var(--shadow);
+    }
+    .lang-option {
+      padding: 8px 20px;
+      border-radius: 40px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .lang-option.active {
+      background: var(--primary);
+      color: white;
+      box-shadow: 0 4px 12px rgba(79,70,229,0.35);
+    }
+  </style>
+</head>
+<body>
+
+<div class="page-wrapper">
+  <p class="page-title">🎓 UniSearch China — Student App Mockup</p>
+
+  <!-- Language Switcher Strip -->
+  <div class="lang-strip">
+    <button class="lang-option active" onclick="setLang('en')">🇬🇧 English</button>
+    <button class="lang-option" onclick="setLang('ar')">🇸🇦 العربية</button>
+    <button class="lang-option" onclick="setLang('zh')">🇨🇳 中文</button>
+  </div>
+
+  <!-- Phone Shell -->
+  <div class="phone" id="app">
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+      <span>9:41</span>
+      <div class="notch"></div>
+      <span>●●● 5G</span>
+    </div>
+
+    <!-- Header -->
+    <div class="app-header">
+      <div class="header-row">
+        <div class="app-brand">
+          <div class="app-logo">🎓</div>
+          <div>
+            <div class="app-name" id="txt-appname">UniSearch</div>
+            <div class="app-sub" id="txt-appsub">China University Portal</div>
+          </div>
+        </div>
+        <button class="lang-btn" onclick="cycleLang()">EN / 中 / ع</button>
+      </div>
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input class="search-input" id="txt-search" type="text" placeholder="Search universities, cities, majors...">
+      </div>
+    </div>
+
+    <!-- Filter Chips -->
+    <div class="filters" id="filters">
+      <div class="chip active" onclick="selectChip(this)" data-en="All" data-ar="الكل" data-zh="全部">All</div>
+      <div class="chip" onclick="selectChip(this)" data-en="Medical 🏥" data-ar="الطب 🏥" data-zh="医学 🏥">Medical 🏥</div>
+      <div class="chip" onclick="selectChip(this)" data-en="Engineering ⚙️" data-ar="الهندسة ⚙️" data-zh="工程 ⚙️">Engineering ⚙️</div>
+      <div class="chip" onclick="selectChip(this)" data-en="Language 🌐" data-ar="اللغات 🌐" data-zh="语言 🌐">Language 🌐</div>
+      <div class="chip" onclick="selectChip(this)" data-en="Business 💼" data-ar="إدارة الأعمال 💼" data-zh="商科 💼">Business 💼</div>
+      <div class="chip" onclick="selectChip(this)" data-en="Art & Design 🎨" data-ar="الفنون 🎨" data-zh="艺术 🎨">Art & Design 🎨</div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content">
+
+      <!-- Stats Banner -->
+      <div class="stats-banner">
+        <div class="stat-item">
+          <div class="stat-value">500+</div>
+          <div class="stat-label" id="txt-s1">Universities</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <div class="stat-value">30+</div>
+          <div class="stat-label" id="txt-s2">Provinces</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <div class="stat-value">12K+</div>
+          <div class="stat-label" id="txt-s3">Students Helped</div>
+        </div>
+      </div>
+
+      <!-- Section -->
+      <div class="section-header">
+        <span class="section-title" id="txt-featured">⭐ Featured Universities</span>
+        <span class="see-all" id="txt-seeall">See All →</span>
+      </div>
+
+      <!-- Card 1: Tsinghua -->
+      <div class="uni-card">
+        <div class="card-img" style="background-image:url('https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&q=80&w=800')">
+          <div class="card-img-overlay"></div>
+          <div class="card-badges">
+            <span class="badge badge-rank">#1 Ranked</span>
+            <span class="badge badge-type">Comprehensive</span>
+          </div>
+          <div class="card-bottom-label">
+            <span class="card-uni-name-overlay">Tsinghua University · 清华大学</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-header-row">
+            <div>
+              <div class="card-title" id="cu-title">Tsinghua University</div>
+              <div class="card-subtitle">📍 <span id="cu-loc">Beijing, China</span></div>
+            </div>
+            <button class="save-btn" onclick="toggleSave(this)" title="Save">🤍</button>
+          </div>
+          <div class="card-tags">
+            <span class="tag">Engineering</span>
+            <span class="tag green">Medicine</span>
+            <span class="tag cyan">English Programs</span>
+          </div>
+          <div class="card-meta">
+            <div class="meta-item">
+              <span class="meta-label" id="cu-tl">Tuition/Year</span>
+              <span class="meta-value">¥28,000–45,000</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label" id="cu-dl">Deadline</span>
+              <span class="meta-value">May 31, 2026</span>
+            </div>
+          </div>
+          <div class="card-actions">
+            <button class="btn-primary" id="cu-btn1">View Details</button>
+            <button class="btn-outline" id="cu-btn2">Inquire</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2: Fudan -->
+      <div class="uni-card">
+        <div class="card-img" style="background-image:url('https://images.unsplash.com/photo-1562774053-701939374585?auto=format&fit=crop&q=80&w=800')">
+          <div class="card-img-overlay"></div>
+          <div class="card-badges">
+            <span class="badge badge-featured">Top Medical</span>
+            <span class="badge badge-type">Research</span>
+          </div>
+          <div class="card-bottom-label">
+            <span class="card-uni-name-overlay">Fudan University · 复旦大学</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-header-row">
+            <div>
+              <div class="card-title" id="fu-title">Fudan University</div>
+              <div class="card-subtitle">📍 <span id="fu-loc">Shanghai, China</span></div>
+            </div>
+            <button class="save-btn" onclick="toggleSave(this)">🤍</button>
+          </div>
+          <div class="card-tags">
+            <span class="tag green">Medical</span>
+            <span class="tag">Business</span>
+            <span class="tag orange">Scholarship Available</span>
+          </div>
+          <div class="card-meta">
+            <div class="meta-item">
+              <span class="meta-label" id="fu-tl">Tuition/Year</span>
+              <span class="meta-value">¥32,000–52,000</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label" id="fu-dl">Deadline</span>
+              <span class="meta-value">Apr 30, 2026</span>
+            </div>
+          </div>
+          <div class="card-actions">
+            <button class="btn-primary" id="fu-btn1">View Details</button>
+            <button class="btn-outline" id="fu-btn2">Inquire</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3: BLCU -->
+      <div class="uni-card">
+        <div class="card-img" style="background-image:url('https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80&w=800')">
+          <div class="card-img-overlay"></div>
+          <div class="card-badges">
+            <span class="badge badge-rank">#1 Language</span>
+          </div>
+          <div class="card-bottom-label">
+            <span class="card-uni-name-overlay">BLCU · 北京语言大学</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-header-row">
+            <div>
+              <div class="card-title" id="bl-title">Beijing Language University</div>
+              <div class="card-subtitle">📍 <span id="bl-loc">Beijing, China</span></div>
+            </div>
+            <button class="save-btn saved" onclick="toggleSave(this)">❤️</button>
+          </div>
+          <div class="card-tags">
+            <span class="tag cyan">Language</span>
+            <span class="tag">Arabic Programs</span>
+            <span class="tag orange">HSK Prep</span>
+          </div>
+          <div class="card-meta">
+            <div class="meta-item">
+              <span class="meta-label" id="bl-tl">Tuition/Year</span>
+              <span class="meta-value">¥18,000–26,000</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label" id="bl-dl">Deadline</span>
+              <span class="meta-value">Jun 15, 2026</span>
+            </div>
+          </div>
+          <div class="card-actions">
+            <button class="btn-primary" id="bl-btn1">View Details</button>
+            <button class="btn-outline" id="bl-btn2">Inquire</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Floating Action Button -->
+    <button class="fab" title="Compare">⚖️</button>
+
+    <!-- Bottom Nav -->
+    <div class="bottom-nav">
+      <div class="nav-item active">
+        <span class="nav-icon">🏠</span>
+        <span id="nav-home">Home</span>
+      </div>
+      <div class="nav-item">
+        <span class="nav-icon">❤️</span>
+        <span id="nav-saved">Saved</span>
+      </div>
+      <div class="nav-item">
+        <span class="nav-icon">💬</span>
+        <span id="nav-inquiries">Inquiries</span>
+      </div>
+      <div class="nav-item">
+        <span class="nav-icon">👤</span>
+        <span id="nav-profile">Profile</span>
+      </div>
+    </div>
+
+  </div><!-- end .phone -->
+
+</div><!-- end .page-wrapper -->
+
+<script>
+const langs = ['en', 'ar', 'zh'];
+let currentLang = 0;
+
+const translations = {
+  en: {
+    'txt-appname': 'UniSearch',
+    'txt-appsub': 'China University Portal',
+    'txt-search': 'Search universities, cities, majors...',
+    'txt-s1': 'Universities',
+    'txt-s2': 'Provinces',
+    'txt-s3': 'Students Helped',
+    'txt-featured': '⭐ Featured Universities',
+    'txt-seeall': 'See All →',
+    'cu-title': 'Tsinghua University',
+    'cu-loc': 'Beijing, China',
+    'cu-tl': 'Tuition/Year',
+    'cu-dl': 'Deadline',
+    'cu-btn1': 'View Details',
+    'cu-btn2': 'Inquire',
+    'fu-title': 'Fudan University',
+    'fu-loc': 'Shanghai, China',
+    'fu-tl': 'Tuition/Year',
+    'fu-dl': 'Deadline',
+    'fu-btn1': 'View Details',
+    'fu-btn2': 'Inquire',
+    'bl-title': 'Beijing Language University',
+    'bl-loc': 'Beijing, China',
+    'bl-tl': 'Tuition/Year',
+    'bl-dl': 'Deadline',
+    'bl-btn1': 'View Details',
+    'bl-btn2': 'Inquire',
+    'nav-home': 'Home',
+    'nav-saved': 'Saved',
+    'nav-inquiries': 'Inquiries',
+    'nav-profile': 'Profile',
+  },
+  ar: {
+    'txt-appname': 'يوني سيرش',
+    'txt-appsub': 'بوابة الجامعات الصينية',
+    'txt-search': 'ابحث عن جامعات، مدن، تخصصات...',
+    'txt-s1': 'جامعة',
+    'txt-s2': 'مقاطعة',
+    'txt-s3': 'طالب استفاد',
+    'txt-featured': '⭐ الجامعات المميزة',
+    'txt-seeall': 'عرض الكل ←',
+    'cu-title': 'جامعة تسينغهوا',
+    'cu-loc': 'بكين، الصين',
+    'cu-tl': 'الرسوم/سنة',
+    'cu-dl': 'الموعد النهائي',
+    'cu-btn1': 'عرض التفاصيل',
+    'cu-btn2': 'استفسر الآن',
+    'fu-title': 'جامعة فودان',
+    'fu-loc': 'شنغهاي، الصين',
+    'fu-tl': 'الرسوم/سنة',
+    'fu-dl': 'الموعد النهائي',
+    'fu-btn1': 'عرض التفاصيل',
+    'fu-btn2': 'استفسر الآن',
+    'bl-title': 'جامعة بكين للغات',
+    'bl-loc': 'بكين، الصين',
+    'bl-tl': 'الرسوم/سنة',
+    'bl-dl': 'الموعد النهائي',
+    'bl-btn1': 'عرض التفاصيل',
+    'bl-btn2': 'استفسر الآن',
+    'nav-home': 'الرئيسية',
+    'nav-saved': 'المحفوظة',
+    'nav-inquiries': 'الاستفسارات',
+    'nav-profile': 'الملف الشخصي',
+  },
+  zh: {
+    'txt-appname': '大学搜索',
+    'txt-appsub': '中国大学门户',
+    'txt-search': '搜索大学、城市、专业...',
+    'txt-s1': '所大学',
+    'txt-s2': '个省份',
+    'txt-s3': '名学生受益',
+    'txt-featured': '⭐ 精选大学',
+    'txt-seeall': '查看全部 →',
+    'cu-title': '清华大学',
+    'cu-loc': '中国北京',
+    'cu-tl': '学费/年',
+    'cu-dl': '截止日期',
+    'cu-btn1': '查看详情',
+    'cu-btn2': '立即咨询',
+    'fu-title': '复旦大学',
+    'fu-loc': '中国上海',
+    'fu-tl': '学费/年',
+    'fu-dl': '截止日期',
+    'fu-btn1': '查看详情',
+    'fu-btn2': '立即咨询',
+    'bl-title': '北京语言大学',
+    'bl-loc': '中国北京',
+    'bl-tl': '学费/年',
+    'bl-dl': '截止日期',
+    'bl-btn1': '查看详情',
+    'bl-btn2': '立即咨询',
+    'nav-home': '首页',
+    'nav-saved': '收藏',
+    'nav-inquiries': '咨询',
+    'nav-profile': '我的',
+  }
+};
+
+function applyLang(lang) {
+  const t = translations[lang];
+  document.getElementById('app').setAttribute('data-lang', lang);
+
+  // Text direction
+  document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+
+  // Apply translations
+  Object.keys(t).forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      if (el.tagName === 'INPUT') el.placeholder = t[id];
+      else el.textContent = t[id];
+    }
+  });
+
+  // Update chips
+  document.querySelectorAll('.chip').forEach(chip => {
+    chip.textContent = chip.getAttribute('data-' + lang) || chip.getAttribute('data-en');
+  });
+
+  // Update lang strip buttons
+  document.querySelectorAll('.lang-option').forEach(btn => btn.classList.remove('active'));
+  document.querySelectorAll('.lang-option')[langs.indexOf(lang)].classList.add('active');
+}
+
+function setLang(lang) {
+  currentLang = langs.indexOf(lang);
+  applyLang(lang);
+}
+
+function cycleLang() {
+  currentLang = (currentLang + 1) % langs.length;
+  applyLang(langs[currentLang]);
+}
+
+function selectChip(el) {
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function toggleSave(btn) {
+  if (btn.textContent === '🤍') {
+    btn.textContent = '❤️';
+    btn.classList.add('saved');
+  } else {
+    btn.textContent = '🤍';
+    btn.classList.remove('saved');
+  }
+}
+
+// Init
+applyLang('en');
+</script>
+</body>
+</html>
