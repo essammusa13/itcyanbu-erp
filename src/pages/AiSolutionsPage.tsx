@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Video, HelpCircle, Box, FileText, Globe, Play, Users, Factory, ArrowLeft, ChevronLeft, ChevronRight, BookOpen, Bot, Zap, Gauge, Target, MessageSquare, ShieldCheck, Maximize } from 'lucide-react';
+import { Video, HelpCircle, Box, FileText, Globe, Play, Users, Factory, ArrowLeft, ChevronLeft, ChevronRight, BookOpen, Bot, Zap, Gauge, Target, MessageSquare, ShieldCheck, Maximize, Smartphone } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 
-
-
+import MockupView from '../components/MockupView';
 
 const AiSolutionsPage = () => {
     const { t } = useTranslation();
@@ -114,6 +113,7 @@ const AiSolutionsPage = () => {
 
     const solutions = [
         { id: 'getting-started', label: t('ai_solutions.getting_started'), icon: Play, color: 'text-purple-500', bg: 'bg-purple-50' },
+        { id: 'mockup', label: 'Student App Mockup', icon: Smartphone, color: 'text-teal-500', bg: 'bg-teal-50' },
         { id: 'conversation-ai', label: 'Conversation AI', icon: Bot, color: 'text-blue-500', bg: 'bg-blue-50' },
         { id: 'cctv-ai', label: t('ai_solutions.cctv_ai'), icon: Video, color: 'text-blue-500', bg: 'bg-blue-50' },
         { id: 'industry-ai', label: t('ai_solutions.industry_ai'), icon: Factory, color: 'text-orange-500', bg: 'bg-orange-50' },
@@ -208,6 +208,8 @@ const AiSolutionsPage = () => {
                 </div>
             </div>
         );
+        case 'mockup':
+            return <MockupView />;
         case 'cctv-ai':
                 if (cctvSubView === 'overview') {
                     return (
