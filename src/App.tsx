@@ -36,6 +36,7 @@ import { PropertyTourPage } from './pages/Property/PropertyTourPage';
 import { Loader2 } from 'lucide-react';
 import WorkflowBuilder from './pages/WorkflowBuilder';
 import ModernCarriersPage from './pages/ModernCarriersPage';
+import MockupView from './components/MockupView';
 
 function App() {
   const [activeModule, setActiveModule] = useState(window.location.search.includes('tour') ? 'Property Tour' : 'Contacts');
@@ -119,6 +120,37 @@ function App() {
         path="/automation/builder"
         element={
           !user && isSupabaseEnabled ? <Navigate to="/login" replace /> : <WorkflowBuilder />
+        }
+      />
+      <Route
+        path="/ai-solutions/mockup"
+        element={
+          !user && isSupabaseEnabled ? (
+            <Navigate to="/login" replace />
+          ) : (
+            <ContactProvider>
+              <CalendarProvider>
+                <EventProvider>
+                  <SiteProvider>
+                    <PipelineProvider>
+                      <div className="flex h-screen bg-ghl-bg font-sans text-ghl-text overflow-hidden">
+                        <Sidebar
+                          activeModule="AI Solutions"
+                          onModuleChange={() => {}}
+                        />
+                        <div className="flex-1 flex flex-col min-w-0 overflow-hidden min-h-0 relative">
+                          <Header />
+                          <div className="flex-1 flex flex-col overflow-y-auto">
+                            <MockupView />
+                          </div>
+                        </div>
+                      </div>
+                    </PipelineProvider>
+                  </SiteProvider>
+                </EventProvider>
+              </CalendarProvider>
+            </ContactProvider>
+          )
         }
       />
       <Route
