@@ -1,5 +1,3 @@
-import React from 'react';
-
 const mockupHtml = `
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
